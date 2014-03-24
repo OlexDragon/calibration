@@ -105,7 +105,7 @@ public class PacketHeader{
 		if (packetHeader != null) {
 			short packetId = getPacketId();
 			switch (packetId) {
-			case PacketWork.PACKET_ID_CONFIGURATION_FCM_BAIAS_25W_MUTE:
+			case PacketWork.PACKET_ID_CONFIGURATION_FCM_MUTE:
 				packetIdStr = "Mute("+packetId+")";
 				break;
 			case PacketWork.PACKET_BIAS_25W_DEVICE_DEBAG_POTENTIOMETER_N1:

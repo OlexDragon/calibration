@@ -8,7 +8,7 @@ import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
 import irt.unit.data.UnitValue;
 
-public class Measurement extends irt.unit.groups.Group{
+public class MeasurementGroup extends irt.unit.groups.Group{
 
 	public static final byte MEASUREMENT = Packet.IRT_SLCP_PACKET_ID_MEASUREMENT;
 

@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import irt.prologix.communication.PrologixWorker;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
-import irt.prologix.data.PrologixGpibUsbController.FalseOrTrue;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 import irt.serial_protocol.data.value.ValueDouble;
 import irt.serial_protocol.data.value.ValueFrequency;
 import irt.signal_generator.data.SG_8648;
@@ -21,12 +21,12 @@ public class SignalGeneratorWorkerTest {
 
 	private Logger logger = (Logger) LogManager.getLogger();
 
-	private SG_8648 signalGenerator = new SG_8648();
-
 	@Test
 	public void constuctorTest() {
+		logger.entry();
 		try(ComPort comPort = new ComPort(COM_PORT)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
+			SG_8648 signalGenerator = new SG_8648();
 			new SignalGeneratorWorker(prologixWorker, signalGenerator);
 
 			assertEquals(FalseOrTrue.FALSE, 	prologixWorker.getSaveConfig()	);
@@ -37,12 +37,15 @@ public class SignalGeneratorWorkerTest {
 		} catch (Exception e) {
 			logger.catching(e);
 		};
+		logger.exit();
 	}
 
 	@Test
 	public void setFrequencyTest() {
+		logger.entry();
 		try(ComPort comPort = new ComPort(COM_PORT)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
+			SG_8648 signalGenerator = new SG_8648();
 			SignalGeneratorWorker signalGeneratorWorker = new SignalGeneratorWorker(prologixWorker, signalGenerator);
 
 			ValueFrequency valueFrequency = signalGenerator.getValueFrequency();
@@ -58,12 +61,15 @@ public class SignalGeneratorWorkerTest {
 		} catch (Exception e) {
 			logger.catching(e);
 		};
+		logger.exit();
 	}
 
 	@Test
 	public void setPowerTest() {
+		logger.entry();
 		try(ComPort comPort = new ComPort(COM_PORT)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
+			SG_8648 signalGenerator = new SG_8648();
 			SignalGeneratorWorker signalGeneratorWorker = new SignalGeneratorWorker(prologixWorker, signalGenerator);
 
 			ValueDouble valuePower = signalGenerator.getValuePower();
@@ -79,22 +85,32 @@ public class SignalGeneratorWorkerTest {
 		} catch (Exception e) {
 			logger.catching(e);
 		};
+		logger.exit();
 	}
 
 	@Test
-	public void setRfOnTest() {
+	public void setRfOnTest(){
+		logger.entry();
 		try(ComPort comPort = new ComPort(COM_PORT)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
+			logger.trace("new SG_8648()");
+			SG_8648 signalGenerator = new SG_8648();
+			logger.trace("new SignalGeneratorWorker()");
 			SignalGeneratorWorker signalGeneratorWorker = new SignalGeneratorWorker(prologixWorker, signalGenerator);
 
+			logger.trace("signalGeneratorWorker.setRFOn(OnOrOff.ON)");
 			signalGeneratorWorker.setRFOn(OnOrOff.ON);
 			Thread.sleep(500);
-			assertEquals(OnOrOff.ON, signalGeneratorWorker.isRFOn());
 
+			OnOrOff rfOn = signalGeneratorWorker.isRFOn();
 			signalGeneratorWorker.setRFOn(OnOrOff.OFF);
+
+			logger.trace("OnOrOff.{}", rfOn);
+			assertEquals(OnOrOff.ON, rfOn);
 
 		} catch (Exception e) {
 			logger.catching(e);
 		};
+		logger.exit();
 	}
 }

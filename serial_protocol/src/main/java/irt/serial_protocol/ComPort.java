@@ -63,7 +63,7 @@ public class ComPort extends SerialPort implements AutoCloseable {
 		openPort();
 	}
 
-	public Packet send(Packet p){
+	public synchronized Packet send(Packet p){
 		logger.entry(p);
 
 		PacketHeader ph = p.getHeader();
@@ -166,9 +166,8 @@ do{
 						}
 					}
 				}
-				byte[] acknowledge = getAcknowledge();
 				if(isRun())
-					writeBytes(acknowledge);
+					writeBytes(getAcknowledge());
 			}else
 				setRun(false);
 }while(isComfirm && packet.getPayloads()==null && ++runTimes<3 && isRun());//if error repeat up to 3 times
@@ -293,14 +292,14 @@ do{
 	}
 
 	public byte[] send(byte[] buffer, int waitTyme, boolean needAnswer, String waitFor) throws SerialPortException {
-		logger.entry(buffer, waitTyme, needAnswer, waitFor);
+		logger.entry(this, buffer, waitTyme, needAnswer, waitFor);
 		byte[] read = null;
 
 		if (isOpened() && buffer != null && buffer.length > 0) {
 
 			writeBytes(buffer);
 
-			if (needAnswer)
+			if (needAnswer){
 				while (!contains(read, waitFor.getBytes()) && wait(1, waitTyme)) {
 					byte[] r = readBytes(getInputBufferBytesCount());
 					logger.trace("{}", r);
@@ -312,11 +311,14 @@ do{
 						read = Arrays.copyOf(read, read.length + r.length);
 						System.arraycopy(r, 0, read, destPos, r.length);
 					}
-					logger.trace("{}", read);
 				}
-		}
+				logger.trace("{}", read);
+			}else
+				logger.trace("not need answer");
+		}else
+			logger.warn("{}; {}", this, buffer);
 
-		return logger.exit(read);
+		return read;
 	}
 
 	private boolean contains(byte[] original, byte[] lookinFor) {
@@ -345,7 +347,7 @@ do{
 
 	@Override
 	public String toString() {
-		return getPortName();
+		return getPortName()+" is Opened="+isOpened()+"; run="+run;
 	}
 
 	public int getTimeout() {
@@ -362,6 +364,7 @@ do{
 	}
 
 	public byte[] clear() throws SerialPortException {
+		logger.entry();
 		int waitTime = 20;
 		byte[] readBytes = null;
 		while(wait(1, waitTime)){
@@ -372,6 +375,7 @@ do{
 			if(waitTime!=100)
 				waitTime = 100;
 		}
+		logger.trace("exit - {}", readBytes);
 		return readBytes;
 	}
 
@@ -516,11 +520,13 @@ do{
 	}
 
 	public boolean wait(int eventValue, int waitTime) throws SerialPortException {
+		logger.entry(eventValue, waitTime);
 		boolean isReady = false;
 		long start = System.currentTimeMillis();
 		long waitTimeL = waitTime*eventValue;
+		long elapsedTime = 0;
 
-		while(isOpened() && !(isReady = getInputBufferBytesCount()>=eventValue) && (System.currentTimeMillis()-start)<waitTimeL && isRun()){
+		while(isOpened() && !(isReady = getInputBufferBytesCount()>=eventValue) && (elapsedTime=System.currentTimeMillis()-start)<waitTimeL && isRun()){
 			synchronized (this) {
 
 				try { wait(waitTimeL); } catch (InterruptedException e) {
@@ -533,7 +539,9 @@ do{
 		};
 		if(isSerialPortEven)
 			isSerialPortEven = false;
-		return isReady;
+
+		logger.trace("elapsedTime={}", elapsedTime);
+		return logger.exit(isReady);
 	}
 
 	@Override

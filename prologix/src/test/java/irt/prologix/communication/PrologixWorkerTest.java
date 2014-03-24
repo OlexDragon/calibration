@@ -2,8 +2,8 @@ package irt.prologix.communication;
 
 import static org.junit.Assert.assertEquals;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
-import irt.prologix.data.PrologixGpibUsbController.FalseOrTrue;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
@@ -35,6 +35,7 @@ public class PrologixWorkerTest {
 
 	@Test
 	public void addrTest(){
+		logger.entry();
 
 		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
@@ -47,6 +48,7 @@ public class PrologixWorkerTest {
 			logger.trace("addrToSend={}, getAddr={}", addrToSend, getAddr);
 			assertEquals(addrToSend, getAddr!=null ? (int)getAddr : addrToSend+1);
 
+			logger.exit();
 		}catch(Exception ex){
 			logger.catching(ex);
 		}

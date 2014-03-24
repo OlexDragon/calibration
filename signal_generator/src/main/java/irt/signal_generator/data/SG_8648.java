@@ -1,6 +1,7 @@
 package irt.signal_generator.data;
 
 import irt.prologix.communication.Tools;
+import irt.prologix.data.PrologixGpibUsbController.CommandsInterface;
 import irt.serial_protocol.data.value.ValueDouble;
 import irt.serial_protocol.data.value.ValueFrequency;
 
@@ -25,12 +26,12 @@ public class SG_8648 extends Tools{
 
 		super.setId(id);
 
-		if(id!=null)
-			if(id.contains("8648B"))
+		if(id!=null && id.contains("8648B"))
 						valueFrequency = new ValueFrequency( "1GHz", "9 kHz", "2 GHz");
 					else//8648C
 						valueFrequency = new ValueFrequency( "1GHz", "9 kHz", "3.2 GHz");
-		valueFrequency.setDoToStringFofrat(false);
+
+		valueFrequency.setDoStringFofrat(false);
 
 		valuePower = new ValueDouble(-100, -129.3, 20.7, 1);
 
@@ -64,7 +65,8 @@ public class SG_8648 extends Tools{
 
 	public void setFrequency(String value) {
 		logger.entry(value);
-		valueFrequency.setValue(value);
+		if(value!=null)
+			valueFrequency.setValue(value);
 		logger.exit(valueFrequency);
 	}
 
@@ -74,9 +76,20 @@ public class SG_8648 extends Tools{
 		logger.exit(valueFrequency);
 	}
 
-	public void setPower(String value) {
+	public void setPower(Object value) {
 		logger.entry(value);
-		valuePower.setValue(value);
+
+		if(value instanceof String)
+			valuePower.setValue((String)value);
+		else if(value instanceof Long)
+			valuePower.setValue((Long)value);
+		else if(value instanceof Integer)
+			valuePower.setValue((Integer)value);
+		else if(value instanceof Short)
+			valuePower.setValue((Short)value);
+		else if(value instanceof Byte)
+			valuePower.setValue((Byte)value);
+
 		logger.exit(valuePower);
 	}
 
@@ -86,20 +99,26 @@ public class SG_8648 extends Tools{
 		logger.exit(valuePower);
 	}
 
-	public byte[] getFrequencySetCommand(long value) {
+	public CommandsInterface getFrequencySetCommand(long value) {
 		logger.entry(value);
 		setFrequency(value);
-		return logger.exit(Commands.FREQUENCY.getCommand(valueFrequency.toString()));
+		return logger.exit(Commands.FREQUENCY.setValue(valueFrequency));
 	}
 
-	public byte[] getPowerSetCommand(long value) {
+	public CommandsInterface getFrequencySetCommand(String value) {
+		logger.entry(value);
+		setFrequency(value);
+		return logger.exit(Commands.FREQUENCY.setValue(valueFrequency));
+	}
+
+	public CommandsInterface getPowerSetCommand(Object value) {
 		logger.entry(value);
 		setPower(value);
-		return logger.exit(Commands.AMPLITUDE.getCommand(valuePower.toString()));
+		return logger.exit(Commands.AMPLITUDE.setValue(valuePower));
 	}
 
-	public byte[] getRFOnSetCommand(OnOrOff onOrOff) {
-		return Commands.RF_ON.getCommand(onOrOff.name());
+	public CommandsInterface getRFOnSetCommand(OnOrOff onOrOff) {
+		return Commands.RF_ON.setValue(onOrOff);
 	}
 
 	/**

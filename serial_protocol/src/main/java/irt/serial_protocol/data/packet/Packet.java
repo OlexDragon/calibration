@@ -7,6 +7,8 @@
  */
 package irt.serial_protocol.data.packet;
 
+import irt.serial_protocol.data.RegisterValue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,11 +118,11 @@ public class Packet {
 
 	/*Device Debug - IRT_SLCP_PACKET_ID_DEVICE_DEBAG*/
 	public static final byte
-	IRT_SLCP_PARAMETER_DEVICE_DEBAG_INFO 		= 1,
-	IRT_SLCP_PARAMETER_DEVICE_DEBAG_DUMP 		= 2,
-	IRT_SLCP_PARAMETER_DEVICE_DEBAG_READ_WRITE 	= 3,
-	IRT_SLCP_PARAMETER_DEVICE_DEBAG_INDEX 		= 4,
-	IRT_SLCP_PARAMETER_DEVICE_DEBAG_CALIBRATION_MODE = 5,
+	IRT_SLCP_PARAMETER_DEVICE_DEBUG_INFO 		= 1,
+	IRT_SLCP_PARAMETER_DEVICE_DEBUG_DUMP 		= 2,
+	IRT_SLCP_PARAMETER_DEVICE_DEBUG_READ_WRITE 	= 3,
+	IRT_SLCP_PARAMETER_DEVICE_DEBUG_INDEX 		= 4,
+	IRT_SLCP_PARAMETER_DEVICE_DEBUG_CALIBRATION_MODE = 5,
 	IRT_SLCP_PARAMETER_DEVICE_DEBUG_ENVIRONMENT_IO = 10;
 
 	/* Configuration codes. */
@@ -193,6 +195,13 @@ public class Packet {
 	/* PicoBUC production procedures */
 
 	public static final byte IRTSCP_PACKET_ID_PRODUCTION_GENERIC_SET_1_DP_INIT = 1; /* Re-init default values of RDAC */
+
+	public static final byte IRT_SLCP_PARAMETER_DEVICE_INFORMATION_FIRMWARE_VERSION 	= 2,
+							IRT_SLCP_PARAMETER_DEVICE_INFORMATION_FIRMWARE_BUILD_DATE 	= 3,
+							IRT_SLCP_PARAMETER_DEVICE_INFORMATION_UNIT_UPTIME_COUNTER 	= 4,
+							IRT_SLCP_PARAMETER_DEVICE_INFORMATION_SERIAL_NUMBER 		= 5,
+							IRT_SLCP_PARAMETER_DEVICE_INFORMATION_UNIT_NAME 			= 6,
+							IRT_SLCP_PARAMETER_DEVICE_INFORMATION_UNIT_PART_NUMBER 		= 7;
 
 
 	private PacketHeader header;	//irtslcp_packet_header
@@ -438,12 +447,18 @@ public class Packet {
 		byte[] bytes = null;
 
 		if(value!=null){
-			if(value instanceof Short)
+			if(value instanceof Byte)
+				bytes = new byte[]{(Byte) value};
+			else if(value instanceof Short)
 				bytes = shortToBytes((Short)value);
 			else if(value instanceof Integer)
 				bytes = intToBytes((Integer)value);
 			else if(value instanceof Long)
 				bytes = longToBytes((Long)value);
+			else if(value instanceof RegisterValue) {
+				RegisterValue v = (RegisterValue)value;
+				bytes = concat(intToBytes(v.getIndex()), intToBytes(v.getAddr()));
+			}
 		}
 
 		return bytes;
