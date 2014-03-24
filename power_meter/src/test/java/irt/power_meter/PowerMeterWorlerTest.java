@@ -5,8 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import irt.power_meter.data.EPM_441A;
 import irt.prologix.communication.PrologixWorker;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
-import irt.prologix.data.PrologixGpibUsbController.FalseOrTrue;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;

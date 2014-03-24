@@ -54,4 +54,8 @@ public class ValueDouble extends Value {
 	public int getPrecision() {
 		return precision;
 	}
+
+	public double getDouble() {
+		return (double)value/factor;
+	}
 }

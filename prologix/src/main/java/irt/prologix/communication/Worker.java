@@ -1,12 +1,12 @@
 package irt.prologix.communication;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
-
 import irt.prologix.communication.Tools.Commands;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
 import irt.prologix.data.PrologixGpibUsbController.Eos;
-import irt.prologix.data.PrologixGpibUsbController.FalseOrTrue;
+import irt.serial_protocol.data.value.Enums.FalseOrTrue;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 
 public abstract class Worker {
 
@@ -42,14 +42,20 @@ public abstract class Worker {
 	protected void checkAddress() throws Exception {
 		byte addr = getAddr();
 
-		if(prologixWorker.getAddr()!=addr)
-			prologixWorker.setAddr(addr);
+		Byte a = prologixWorker.getAddr();
+		logger.trace("addr={}; a={}", addr, a);
+
+		if(a!=null){
+			if(a!=addr)
+				prologixWorker.setAddr(addr);
+		}else
+			logger.warn("can not get address");
 	}
 
 	public String getId() throws Exception {
 		logger.entry();
 		checkAddress();
-		byte[] read = getPrologixWorker().sendCommand(Commands.ID.getCommand(), true, Eos.CR_LF, 1000);
+		byte[] read = getPrologixWorker().sendCommand(Commands.ID, true, Eos.LF, 2000);
 		return logger.exit(read!=null ? new String(read) : null);
 	}
 

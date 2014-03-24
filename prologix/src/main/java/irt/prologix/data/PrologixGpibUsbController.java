@@ -1,7 +1,12 @@
 package irt.prologix.data;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+
 public class PrologixGpibUsbController {
-	
+
+	protected static final Logger logger = (Logger) LogManager.getLogger();
+
 //	public static final int CR_LF 	= 0;
 //	public static final int CR 		= 1;
 //	public static final int LF 		= 2;
@@ -9,7 +14,7 @@ public class PrologixGpibUsbController {
 //	public static final int DON 	= 1;
 //	public static final int NOT_FAUND = 0;
 //	public static final int UNRECOGNIZED_COMMAND = -1;
-	
+
 	//Device type
 	public enum DeviceType{
 		DEVICE,
@@ -17,8 +22,12 @@ public class PrologixGpibUsbController {
 		FOR_BOTH
 	}
 
+	public interface CommandsInterface{
+		public byte[] getCommand();
+		public Object getValue();
+	}
 	//Commands
-	public enum Commands{
+	public enum Commands implements CommandsInterface{
 		ADDR		("++addr"		,DeviceType.FOR_BOTH	),
 		EOI			("++eoi"		,DeviceType.FOR_BOTH	),
 		EOS			("++eos"		,DeviceType.FOR_BOTH	),
@@ -44,6 +53,7 @@ public class PrologixGpibUsbController {
 		STATUS		("++status"		,DeviceType.DEVICE		);
 
 		private String command;
+		private Object value;
 		private DeviceType deviceType;
 
 		private Commands(String command, DeviceType deviceType){
@@ -51,27 +61,37 @@ public class PrologixGpibUsbController {
 			this.deviceType = deviceType;
 		}
 
-		public byte[] getCommand(int value){
-			return (toString()+" "+value+Eos.LF).getBytes();
+		public Object getValue() {
+			return value;
+		}
+
+		public CommandsInterface setValue(Object value) {
+			logger.entry(value);
+			this.value = value;
+			return this;
 		}
 
 		public byte[] getCommand(){
-			return (toString()+Eos.LF).getBytes();
-		}
+			String str;
+			if(value!=null){
+				str = command+" "+value;
+				value = null;
+			}else
+				str = command;
 
-		@Override
-		public String toString() {
-			return command;
+			logger.trace("command={}", str);
+
+			return (str+Eos.LF).getBytes();
 		}
 
 		public DeviceType getDeviceType() {
 			return deviceType;
 		}
-	}
 
-	public enum FalseOrTrue{
-		FALSE,
-		TRUE
+		@Override
+		public String toString() {
+			return "command="+command+"; value="+value;
+		}
 	}
 
 	public enum Eos{

@@ -26,7 +26,7 @@ public class Value extends Observable{
 	private long maxValue;
 	protected int factor;
 	protected String prefix;
-	private boolean doToStringFofrat;
+	private boolean doStringFormat;
 
 	private boolean error;
 
@@ -149,7 +149,7 @@ public class Value extends Observable{
 	}
 
 	public void setValue(double value) {
-		// TODO Auto-generated method stub
+		setValue((long)(value*factor));
 	}
 
 	public long getValue() {
@@ -273,11 +273,11 @@ public class Value extends Observable{
 	}
 
 	public boolean isDoToStringFofrat() {
-		return doToStringFofrat;
+		return doStringFormat;
 	}
 
-	public void setDoToStringFofrat(boolean doToStringFofrat) {
-		this.doToStringFofrat = doToStringFofrat;
+	public void setDoStringFofrat(boolean doStringFormat) {
+		this.doStringFormat = doStringFormat;
 	}
 
 	@Override
@@ -293,7 +293,7 @@ public class Value extends Observable{
 	public String toString(long value) {
 		NumberFormat numberFormat = getInstance();
 		double result = (double)value/factor;
-		return (doToStringFofrat ? numberFormat.format(result) : result)+prefix;
+		return (doStringFormat ? numberFormat.format(result) : result)+prefix;
 	}
 
 	@Override

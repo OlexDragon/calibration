@@ -1,10 +1,11 @@
 package irt.prologix.communication;
 
 import irt.prologix.data.PrologixGpibUsbController.Commands;
+import irt.prologix.data.PrologixGpibUsbController.CommandsInterface;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
 import irt.prologix.data.PrologixGpibUsbController.Eos;
-import irt.prologix.data.PrologixGpibUsbController.FalseOrTrue;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 import jssc.SerialPortException;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,17 +17,24 @@ public class PrologixWorker {
 
 	private ComPort comPort;
 
+	public ComPort getComPort() {
+		return comPort;
+	}
+
 	public PrologixWorker(ComPort comPort) throws Exception {
 		logger.entry(comPort);
+
 		this.comPort = comPort;
 
 		if(getSaveConfig()!=FalseOrTrue.FALSE)
 			setSaveConfig(FalseOrTrue.FALSE);
+
+		logger.exit();
 	}
 
 	public DeviceType getMode() throws Exception{
 		logger.entry(comPort);
-		byte[] read = sendCommand(Commands.MODE, null);
+		byte[] read = sendCommand(Commands.MODE);
 
 		DeviceType mode = null;
 
@@ -41,67 +49,66 @@ public class PrologixWorker {
 
 	public void setMode( DeviceType deviceType) throws Exception{
 		logger.entry(deviceType);
-		sendCommand(Commands.MODE, deviceType.ordinal());
+		sendCommand(Commands.MODE.setValue(deviceType.ordinal()));
 	}
 
 	public Byte getAddr() throws Exception{
 		logger.entry();
-		return logger.exit(readToByte(sendCommand(Commands.ADDR, null)));
+		return logger.exit(readToByte(sendCommand(Commands.ADDR)));
 	}
 
 	public void setAddr(int addr) throws Exception{
 		logger.entry(addr);
-		sendCommand(Commands.ADDR, addr);
+		sendCommand(Commands.ADDR.setValue(addr));
 	}
 
 	public FalseOrTrue isReadAfterWrite() throws Exception{
-		Byte bytesToInteger = readToByte(sendCommand(Commands.READ_AFTER_WRITE, null));
+		Byte bytesToInteger = readToByte(sendCommand(Commands.READ_AFTER_WRITE));
 		return logger.exit(bytesToInteger!=null ? FalseOrTrue.values()[bytesToInteger] : null);
 	}
 
 	public void setReadAfterWrite(FalseOrTrue falseOrTrue) throws Exception{
 		logger.entry(falseOrTrue);
-		sendCommand(Commands.READ_AFTER_WRITE, falseOrTrue.ordinal());
+		sendCommand(Commands.READ_AFTER_WRITE.setValue(falseOrTrue.ordinal()));
 	}
 
 	public void clearToolSettings() throws Exception{
 		logger.entry();
-		sendCommand(Commands.CLR, null);
+		sendCommand(Commands.CLR);
 	}
 
 	public FalseOrTrue getSaveConfig() throws Exception{
-		Byte bytesToInteger = readToByte(sendCommand(Commands.SAVECFG, null));
+		Byte bytesToInteger = readToByte(sendCommand(Commands.SAVECFG));
 		return logger.exit(bytesToInteger!=null ? FalseOrTrue.values()[bytesToInteger] : null);
 	}
 
 	public void setSaveConfig(FalseOrTrue falseOrTrue) throws Exception{
 		logger.entry(falseOrTrue);
-		sendCommand(Commands.SAVECFG, falseOrTrue.ordinal());
+		sendCommand(Commands.SAVECFG.setValue(falseOrTrue.ordinal()));
 	}
 
-	public byte[] sendCommand( byte[] value, boolean waitForAnswer, Eos waitFor, int waitTime) throws Exception {
-		logger.entry(value, waitFor);
+	public byte[] sendCommand(CommandsInterface command, boolean waitForAnswer, Eos waitFor, int waitTime) throws Exception {
+		logger.entry(command, waitForAnswer, waitFor, waitTime);
 		clearComPort();
-		return logger.exit(comPort.send(value, waitTime, waitForAnswer, waitFor.toString()));
+		return logger.exit(comPort.send(command.getCommand(), waitTime, waitForAnswer, waitFor.toString()));
 	}
 
 	//----------------------------------------------------------------------------------------------
-	private byte[] sendCommand(Commands command, Integer value) throws Exception {
-		logger.entry(command, value);
-		clearComPort();
-		boolean waitForAnswer = value==null;
-		byte[] c = waitForAnswer ? command.getCommand() : command.getCommand(value);
-		logger.trace("command={}", c);
-		return logger.exit(comPort.send(c, 1000, waitForAnswer, Eos.LF.toString()));
+	private byte[] sendCommand(CommandsInterface command) throws Exception {
+		logger.entry(command);
+		return logger.exit(comPort.send(command.getCommand(), 2000, command.getValue()==null, Eos.LF.toString()));
 	}
 
 	public Byte readToByte(byte[] read) {
 		Byte index = null;
 
 		if(read!=null){
-			String str = new String(read).replaceAll("\\D", "");
-			logger.trace(str);
-			if(!str.isEmpty())
+
+			String str = new String(read);
+			logger.trace("new String({}) = {}", read, str);
+
+			str = str.replaceAll("\\D", "");
+			if(!str.isEmpty() && str.length()<=3)
 				index = Byte.parseByte(str);
 		}
 		return logger.exit(index);

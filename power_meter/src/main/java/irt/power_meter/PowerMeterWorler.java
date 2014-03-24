@@ -24,7 +24,9 @@ public class PowerMeterWorler extends Worker {
 
 	public String measure() throws Exception {
 		logger.entry();
-		byte[] read = getPrologixWorker().sendCommand(Commands.MEASURE.getCommand(), true, Eos.LF, 10000);
+		checkAddress();
+		byte[] read = getPrologixWorker().sendCommand(Commands.MEASURE, true, Eos.LF, 10000);
+		logger.trace("read={}", read);
 
 		if(read!=null)
 			powerMeter.setPower(new String(read));

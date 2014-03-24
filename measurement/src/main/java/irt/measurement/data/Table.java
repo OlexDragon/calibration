@@ -20,8 +20,8 @@ public class Table {
 
 	private double accuracy;
 
-	public void add(double key, double value){
-		mapTable.put(key, value);
+	public Double add(double key, double value){
+		return mapTable.put(key, value);
 	}
 
 	public String getLutSizeName() {
@@ -74,9 +74,10 @@ public class Table {
 				if(mapTableToShow.isEmpty())
 					mapTableToShow.put(key, value);
 				else{
-					if(isLess(mapTableToShow, key, value))
+					if(isLessOrEquals(mapTableToShow, key, value))
 
 						if(mapTableToShow.size()<=3){
+							factors.clear();
 							mapTableToShow.clear();
 							mapTableToShow.put(key, value);
 						}else
@@ -96,7 +97,7 @@ public class Table {
 		return mapTableToShow;
 	}
 
-	private boolean isLess(Map<Double, Double> mapTable, Double key, Double value) {
+	private boolean isLessOrEquals(Map<Double, Double> mapTable, Double key, Double value) {
 		logger.entry(mapTable, key, value);
 		boolean isLess = false;
 
@@ -113,21 +114,29 @@ public class Table {
 	}
 
 	private boolean inRange(Queue<Double> factors) {
-		logger.entry(factors);
 
 		// (100% - factor2/(factor1/100%)) >= 0
-		return logger.exit(Double.compare(Math.abs(100 - factors.peek()*100/factors.poll()), accuracy)<=0);
+		Double poll = factors.poll();
+		Double peek = factors.peek();
+		double abs = Math.abs(100 - peek*100/poll);
+		logger.trace("factors={}, abs={}, accuracy={}, poll={}, peek={}", factors, abs, accuracy, poll, peek);
+
+		return logger.exit(Double.compare(abs, accuracy)<=0);
 	}
 
 	@Override
 	public String toString() {
 
 		Map<Double, Double> mapTableToShow = toAverage();
-		String table = (lutSizeName!=null ? lutSizeName+" " : "")+mapTableToShow.size()+"\n";
+		String table = (lutSizeName!=null ? lutSizeName+"\t" : "")+mapTableToShow.size()+"\n";
 
 		for(Double l:mapTableToShow.keySet())
-			table += (lutValueName!=null ? lutValueName+" " : "")+l+" "+mapTableToShow.get(l)+"\n";
+			table += (lutValueName!=null ? lutValueName+"\t" : "")+Math.round(l)+"\t"+mapTableToShow.get(l)+"\n";
 
 		return table;
+	}
+
+	public void clear() {
+		mapTable.clear();
 	}
 }

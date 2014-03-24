@@ -12,15 +12,15 @@ public class MonitorTest extends TestCase {
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
-	private Measurement monitorConverter;
+	private MeasurementGroup monitorConverter;
 
 	public MonitorTest() throws Exception {
-		Packet packet = Measurement.GET_ALL;
+		Packet packet = MeasurementGroup.GET_ALL;
 		logger.trace(packet);
 		try(ComPort comPort = new ComPort("COM6")){
 			packet = comPort.send(packet);
 		}
-		monitorConverter = new Measurement();
+		monitorConverter = new MeasurementGroup();
 		monitorConverter.setPacket(packet);
 		logger.trace(packet);
 	}
