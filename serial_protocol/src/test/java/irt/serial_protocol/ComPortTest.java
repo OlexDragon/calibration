@@ -1,6 +1,6 @@
 package irt.serial_protocol;
 
-import irt.serial_protocol.data.PacketWork;
+import irt.serial_protocol.data.PacketWork.PacketId;
 import irt.serial_protocol.data.packet.LinkHeader;
 import irt.serial_protocol.data.packet.LinkedPacket;
 import irt.serial_protocol.data.packet.Packet;
@@ -29,7 +29,7 @@ public class ComPortTest {
 		//IRT Management Protocol Specification.docx
 
 		header.setType(Packet.IRT_SLCP_PACKET_TYPE_REQUEST);	//Table 1 Type of packet
-		header.setPacketId(PacketWork.PACKET_DEVICE_INFO);		//Packet ID represents unique identifier of “command/request – response” transaction. 
+		header.setPacketId(PacketId.DEVICE_DEBAG_DEVICE_INFO);	//Packet ID represents unique identifier of “command/request – response” transaction. 
 		header.setGroupId(Packet.IRT_SLCP_PACKET_ID_DEVICE_INFO);//Table 2 Group ID
 		header.setError(Packet.ERROR_NO_ERROR);					//Table 3 Response message error codes
 		linkedPacket.setHeader(header);

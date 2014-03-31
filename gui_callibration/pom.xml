@@ -34,7 +34,7 @@
 
 	<dependency>
 		<groupId>irt</groupId>
-		<artifactId>frequency_converter</artifactId>
+		<artifactId>buc</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</dependency>
 	<dependency>

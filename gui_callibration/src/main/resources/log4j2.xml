@@ -14,8 +14,13 @@
   	<logger name="irt.prologix.communication.PrologixWorker" level="WARN" />
   	<logger name="irt.prologix.communication.Tools" level="WARN" />
   	<logger name="irt.serial_protocol.ComPort" level="WARN" />
-  	<logger name="irt.unit.groups.DeviceDebugGroup" level="WARN" />
-  	<logger name="irt.unit.groups.ConfigurationGroup" level="all" />
+
+  	<logger name="irt.converter.groups.DeviceDebugGroup" level="WARN" />
+  	<logger name="irt.converter.groups.ConfigurationGroup" level="all" />
+ 	<logger name="irt.converter.groups.DeviceInformationGroup" level="all" />
+
+ 	<logger name="irt.buc.groups.DeviceInformationGroup" level="all" />
+  	<logger name="irt.buc.groups.ConfigurationGroup" level="all" />
 
     <Root level="WARN">
       <AppenderRef ref="STDOUT"/>

@@ -1,5 +1,6 @@
 package irt.gui_callibration.panels;
 
+import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.controller.Controller;
 
 import java.awt.Component;
@@ -49,7 +50,7 @@ public class CallibrationPanel extends JPanel {
 						button.setEnabled(readyForCalibration);
 						txtSgPower.setEnabled(readyForCalibration);
 						txtSqFreq.setEnabled(readyForCalibration);
-						chckbxInputPower.setEnabled(readyForCalibration);
+						chckbxInputPower.setEnabled(readyForCalibration && controller.getUnitType()==UnitType.CONVERTER);
 						chckbxOutputPower.setEnabled(controller.isPowerMeter());
 
 						if(readyForCalibration){

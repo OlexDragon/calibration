@@ -1,6 +1,7 @@
 package irt.unit.groups;
 
 import static org.junit.Assert.assertNotNull;
+import irt.converter.groups.DeviceInformationGroup;
 import irt.serial_protocol.ComPort;
 
 import org.apache.logging.log4j.LogManager;

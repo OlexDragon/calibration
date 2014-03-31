@@ -18,6 +18,12 @@ public class LinkedPacket extends Packet {
 		this.linkHeader = linkHeader;
 	}
 
+	public LinkedPacket(LinkHeader linkHeader, Packet packet) {
+		this(linkHeader);
+		setHeader(packet.getHeader());
+		setPayloads(packet.getPayloads());
+	}
+
 	@Override
 	public void set(byte[] data) {
 		setLinkHeader(data);

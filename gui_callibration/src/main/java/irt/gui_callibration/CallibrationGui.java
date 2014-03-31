@@ -18,8 +18,13 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+
 public class CallibrationGui extends JFrame {
 	private static final long serialVersionUID = 9152419965306044578L;
+
+	private static final Logger logger = (Logger) LogManager.getLogger();
 
 	private Controller controller = new Controller();
 	private JPanel contentPane;
@@ -31,7 +36,7 @@ public class CallibrationGui extends JFrame {
 					CallibrationGui frame = new CallibrationGui();
 					frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.catching(e);
 				}
 			}
 		});

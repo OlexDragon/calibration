@@ -1,5 +1,10 @@
 package irt.gui_callibration.controller;
 
+import irt.converter.groups.ConfigurationGroup;
+import irt.converter.groups.DeviceDebugGroup;
+import irt.converter.groups.DeviceDebugGroup.ADC;
+import irt.converter.groups.DeviceInformationGroup;
+import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.CallibrationMonitor;
 import irt.measurement.data.Table;
 import irt.power_meter.PowerMeterWorler;
@@ -14,12 +19,6 @@ import irt.serial_protocol.data.value.ValueFrequency;
 import irt.signal_generator.SignalGeneratorWorker;
 import irt.signal_generator.data.SG_8648;
 import irt.signal_generator.data.SG_8648.OnOrOff;
-import irt.unit.data.UnitValue;
-import irt.unit.groups.ConfigurationGroup;
-import irt.unit.groups.DeviceDebugGroup;
-import irt.unit.groups.DeviceDebugGroup.ADC;
-import irt.unit.groups.DeviceInformationGroup;
-import irt.unit.groups.Group.UnitType;
 
 import java.awt.Color;
 import java.util.List;
@@ -41,13 +40,13 @@ public class Controller {
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
-	private ComPort converterComPort;
-	private PrologixWorker prologixWorker;
-
+	private ComPort 				converterComPort;
+	private PrologixWorker 			prologixWorker;
 	private SignalGeneratorWorker 	signalGeneratorWorker;
 	private PowerMeterWorler 		powerMeterWorler;
 
 	private UnitType unitType = UnitType.CONVERTER;
+	private byte address;
 
 	private DeviceInformationGroup deviceInformation;
 	private ValueDouble valueStep;
@@ -60,12 +59,14 @@ public class Controller {
 	private CallibrationMonitor outputPowerMonitor;
 
 	private boolean isPowerMeter;
-
 	private boolean isSignalGenerator;
 
 	private ValueFrequency valueFrequency;
 
 	private JLabel lblConverter;
+	private JLabel lblTools;
+	private JLabel lblPower;
+
 	public JLabel getLblConverter() {
 		return lblConverter;
 	}
@@ -77,9 +78,6 @@ public class Controller {
 	public JLabel getLblPower() {
 		return lblPower;
 	}
-
-	private JLabel lblTools;
-	private JLabel lblPower;
 
 	//Tools
 	public synchronized void setToolsPort(String portName) {
@@ -160,7 +158,8 @@ public class Controller {
 
 		if(converterComPort!=null)
 		try(ComPort comPort = openConverterPort()){
-			deviceInformation = new DeviceInformationGroup();
+			deviceInformation = unitType==UnitType.CONVERTER ? new DeviceInformationGroup() : new irt.buc.groups.DeviceInformationGroup(address);
+			logger.trace(deviceInformation);
 			deviceInformation.setUnitType(unitType);
 			deviceInformation.getAll(comPort);
 			lblConverter.setBackground(deviceInformation.hasAnswer() ? Color.GREEN : Color.YELLOW);
@@ -210,9 +209,9 @@ public class Controller {
 							boolean beginningOfTheTest = true;
 							int opStartCount = 0;
 
-							ConfigurationGroup configurationGroup = new ConfigurationGroup();
+							ConfigurationGroup configurationGroup = unitType == UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
 							configurationGroup.setMute(comPort, FalseOrTrue.FALSE);
-							final DeviceDebugGroup deviceDebugGroup = new DeviceDebugGroup();
+							final DeviceDebugGroup deviceDebugGroup = unitType == UnitType.CONVERTER ? new DeviceDebugGroup() : new irt.buc.groups.DeviceDebugGroup(address);
 							signalGeneratorWorker.setRFOn(OnOrOff.ON);
 
 							long inUnitValue = Long.MIN_VALUE;
@@ -399,10 +398,9 @@ public class Controller {
 	}
 
 	public void getConverterMuteAndFrequency(ComPort comPort, JButton btnMute, JTextField txtFrequency) {
-			ConfigurationGroup configurationGroup = new ConfigurationGroup();
+			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address) ;
 
 			FalseOrTrue mute = configurationGroup.getMute(comPort);
-			logger.trace("Mute = {}", mute);
 			if(mute!=null){
 				if(mute==FalseOrTrue.FALSE)
 					btnMute.setText("Mute");
@@ -420,16 +418,14 @@ public class Controller {
 				}else
 					txtFrequency.setText("N/A");
 			}
-			logger.trace("Frequency={}", valueFrequency);
+			logger.trace("Mute = {}, Frequency={}", mute, valueFrequency);
 	}
 
 	public FalseOrTrue setConverterMute(FalseOrTrue falseOrTrue) {
 		FalseOrTrue mute = null;
 		try(ComPort comPort = openConverterPort()){
-			ConfigurationGroup configurationGroup = new ConfigurationGroup();
-			UnitValue unitValue = configurationGroup.setMute(comPort, falseOrTrue);
-			if(unitValue!=null)
-				mute = FalseOrTrue.values()[unitValue.getValue()];
+			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
+			mute = configurationGroup.setMute(comPort, falseOrTrue);
 		} catch (Exception e) {
 			logger.catching(e);
 		}
@@ -464,5 +460,18 @@ public class Controller {
 			case "Power":
 				lblPower = l;
 			}
+	}
+
+	public UnitType getUnitType() {
+		return unitType;
+	}
+
+	public void setUnitType(UnitType unitType) {
+		this.unitType = unitType;
+		lblConverter.setText(unitType.name());
+	}
+
+	public void setAddress(byte address) {
+		this.address = address;
 	}
 }

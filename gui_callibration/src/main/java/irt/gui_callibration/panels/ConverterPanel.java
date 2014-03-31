@@ -1,13 +1,16 @@
 package irt.gui_callibration.panels;
 
+import irt.converter.groups.DeviceInformationGroup;
+import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.controller.Controller;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
-import irt.unit.groups.DeviceInformationGroup;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -26,12 +29,10 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
+import jssc.SerialPortList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-
-import jssc.SerialPortList;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
 
 public class ConverterPanel extends JPanel {
 	private static final long serialVersionUID = 2092539378659121768L;
@@ -54,6 +55,7 @@ public class ConverterPanel extends JPanel {
 	private JComboBox<String> comboBox;
 	private JButton btnMute;
 	private JTextField txtFrequency;
+	private JTextField txtAddress;
 
 	public ConverterPanel(final Controller controller) {
 		addAncestorListener(new AncestorListener() {
@@ -79,6 +81,8 @@ public class ConverterPanel extends JPanel {
 		rdbtnBuc 		= new JRadioButton("BUC");
 		rdbtnBuc.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				controller.setUnitType(UnitType.BUC);
+				controller.setAddress((byte) Integer.parseInt(txtAddress.getText()));
 				fillInfo(controller);
 			}
 		});
@@ -104,7 +108,7 @@ public class ConverterPanel extends JPanel {
 							if (rdbtnConverter.isSelected())
 								rdbtnConverter.setSelected(comPortIsSelected);
 
-							// TODO rdbtnBuc.setEnabled(comPortIsSelected);
+							rdbtnBuc.setEnabled(comPortIsSelected);
 							if (rdbtnBuc.isSelected())
 								rdbtnBuc.setSelected(comPortIsSelected);
 
@@ -126,6 +130,7 @@ public class ConverterPanel extends JPanel {
 		
 		rdbtnConverter.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				controller.setUnitType(UnitType.CONVERTER);
 				fillInfo(controller);
 			}
 		});
@@ -133,6 +138,10 @@ public class ConverterPanel extends JPanel {
 		
 		rdbtnBuc.setEnabled(false);
 		buttonGroup.add(rdbtnBuc);
+		
+		txtAddress = new JTextField();
+		txtAddress.setText("254");
+		txtAddress.setColumns(10);
 
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
@@ -142,9 +151,11 @@ public class ConverterPanel extends JPanel {
 					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
 						.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(rdbtnConverter)
-						.addComponent(rdbtnBuc))
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(panel, GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
+						.addGroup(groupLayout.createParallelGroup(Alignment.TRAILING, false)
+							.addComponent(txtAddress, Alignment.LEADING, 0, 0, Short.MAX_VALUE)
+							.addComponent(rdbtnBuc, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+					.addGap(40)
+					.addComponent(panel, GroupLayout.DEFAULT_SIZE, 303, Short.MAX_VALUE)
 					.addContainerGap())
 		);
 		groupLayout.setVerticalGroup(
@@ -158,10 +169,12 @@ public class ConverterPanel extends JPanel {
 							.addPreferredGap(ComponentPlacement.UNRELATED)
 							.addComponent(rdbtnConverter)
 							.addPreferredGap(ComponentPlacement.UNRELATED)
-							.addComponent(rdbtnBuc)))
+							.addComponent(rdbtnBuc)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
 					.addContainerGap())
 		);
-		
+
 		JLabel lblSerialNumberTxt = new JLabel("Serial Number:");
 		lblSerialNumberTxt.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -170,13 +183,13 @@ public class ConverterPanel extends JPanel {
 
 		JLabel lblPartNumberTxt = new JLabel("Part Number:");
 		lblPartNumberTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-		
+
 		JLabel lblFirmwareVersionTxt = new JLabel("Firmware Version:");
 		lblFirmwareVersionTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-		
+
 		JLabel lblFirmwareBuildDateTxt = new JLabel("Firmware Build Date:");
 		lblFirmwareBuildDateTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-		
+
 		JLabel lblCounterTxt = new JLabel("Counter:");
 		lblCounterTxt.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -199,7 +212,7 @@ public class ConverterPanel extends JPanel {
 				}.execute();
 			}
 		});
-		
+
 		txtFrequency = new JTextField();
 		txtFrequency.setColumns(10);
 		
@@ -303,7 +316,7 @@ public class ConverterPanel extends JPanel {
 			protected Void doInBackground() throws Exception {
 				logger.entry(controller);
 
-				if(rdbtnConverter.isSelected())
+				if(rdbtnConverter.isSelected() || rdbtnBuc.isSelected())
 					fillInfo(controller.getDeviceInformation(btnMute, txtFrequency));
 				else
 					clearInfo();
