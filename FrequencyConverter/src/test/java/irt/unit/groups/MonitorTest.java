@@ -1,5 +1,6 @@
 package irt.unit.groups;
 
+import irt.converter.groups.MeasurementGroup;
 import irt.serial_protocol.ComPort;
 import irt.serial_protocol.data.packet.Packet;
 import junit.framework.TestCase;

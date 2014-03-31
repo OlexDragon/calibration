@@ -1,8 +1,9 @@
 package irt.unit.groups;
 
 import static org.junit.Assert.assertNotNull;
+import irt.converter.groups.DeviceDebugGroup;
+import irt.converter.groups.DeviceDebugGroup.ADC;
 import irt.serial_protocol.ComPort;
-import irt.unit.groups.DeviceDebugGroup.ADC;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
