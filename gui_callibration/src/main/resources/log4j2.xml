@@ -7,20 +7,25 @@
   </Appenders>
 
   <Loggers>
-  	<logger name="irt.gui_callibration.controller.Controller" level="all" />
-  	<logger name="irt.gui_callibration.panels.ConverterPanel" level="all" />
+  	<logger name="irt.gui_callibration.controller.Controller" level="debug" />
+  	<logger name="irt.gui_callibration.panels.ConverterPanel" level="WARN" />
+ 
   	<logger name="irt.measurement.data.Table" level="WARN" />
+ 
   	<logger name="irt.power_meter.PowerMeterWorler" level="WARN" />
+
   	<logger name="irt.prologix.communication.PrologixWorker" level="WARN" />
   	<logger name="irt.prologix.communication.Tools" level="WARN" />
+ 
   	<logger name="irt.serial_protocol.ComPort" level="WARN" />
 
-  	<logger name="irt.converter.groups.DeviceDebugGroup" level="WARN" />
-  	<logger name="irt.converter.groups.ConfigurationGroup" level="all" />
- 	<logger name="irt.converter.groups.DeviceInformationGroup" level="all" />
+  	<logger name="irt.converter.groups.DeviceDebugGroup" level="debug" />
+  	<logger name="irt.converter.groups.ConfigurationGroup" level="WARN" />
+ 	<logger name="irt.converter.groups.DeviceInformationGroup" level="WARN" />
 
- 	<logger name="irt.buc.groups.DeviceInformationGroup" level="all" />
-  	<logger name="irt.buc.groups.ConfigurationGroup" level="all" />
+  	<logger name="irt.buc.groups.DeviceDebugGroup" level="debug" />
+  	<logger name="irt.buc.groups.DeviceInformationGroup" level="WARN" />
+  	<logger name="irt.buc.groups.ConfigurationGroup" level="WARN" />
 
     <Root level="WARN">
       <AppenderRef ref="STDOUT"/>

@@ -1,8 +1,13 @@
 package irt.gui_callibration.controller;
 
+import irt.buc.BucWorker;
+import irt.buc.BucWorker.OutoutPowerDetectorSource;
+import irt.buc.groups.DeviceDebugGroup.BucADC;
+import irt.converter.ConverterWorker;
 import irt.converter.groups.ConfigurationGroup;
 import irt.converter.groups.DeviceDebugGroup;
-import irt.converter.groups.DeviceDebugGroup.ADC;
+import irt.converter.groups.DeviceDebugGroup.ADCInterface;
+import irt.converter.groups.DeviceDebugGroup.ConverterADC;
 import irt.converter.groups.DeviceInformationGroup;
 import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.CallibrationMonitor;
@@ -28,7 +33,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import jssc.SerialPortException;
@@ -67,6 +74,16 @@ public class Controller {
 	private JLabel lblTools;
 	private JLabel lblPower;
 
+	private OutoutPowerDetectorSource outoutPowerDetectorSource = OutoutPowerDetectorSource.OUTPUT_DEVICE_CURRENT;
+
+	private JFrame owner;
+
+	private boolean running;
+
+	public Controller(JFrame owner) {
+		this.owner = owner;
+	}
+
 	public JLabel getLblConverter() {
 		return lblConverter;
 	}
@@ -86,6 +103,7 @@ public class Controller {
 				prologixWorker = new PrologixWorker(comPort);
 			} catch (Exception e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		else{
 			signalGeneratorWorker = null;
@@ -111,6 +129,7 @@ public class Controller {
 				converterComPort = new ComPort(portName);
 			} catch (SerialPortException e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		else
 			converterComPort = null;
@@ -136,6 +155,7 @@ public class Controller {
 			id = powerMeterWorler.getId();
 		} catch (Exception e) {
 			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 		}
 		return id;
 	}
@@ -148,6 +168,7 @@ public class Controller {
 			id = signalGeneratorWorker.getId();
 		} catch (Exception e) {
 			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 		}
 		return id;
 	}
@@ -169,6 +190,7 @@ public class Controller {
 		} catch (Exception e) {
 			deviceInformation = null;
 			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 		}
 
 		return logger.exit(deviceInformation);
@@ -186,11 +208,14 @@ public class Controller {
 		return (inputPower || outputPower) && deviceInformation!=null;
 	}
 
-	public void startCallibration() {
+	public Thread startCallibration() {
 		Thread t = new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
+				logger.debug("Start Callibration. inputPower={}, outputPower={}", inputPower, outputPower);
+
+				running = true;
 				if(inputPower){
 					Table inputPowerTable = new Table();
 					inputPowerMonitor.setTable(inputPowerTable);
@@ -201,92 +226,131 @@ public class Controller {
 					outputPowerMonitor.setTable(outputPowerTable);
 				}
 
-				try (ComPort comPort = openConverterPort()) {
-					try (ComPort toolsComPort = openToolsPort()) {
-						if (inputPower || outputPower) {
-							boolean ip = inputPower;
-							boolean op = outputPower;
-							boolean beginningOfTheTest = true;
-							int opStartCount = 0;
+				try (ComPort comPort = openConverterPort(); ComPort toolsComPort = openToolsPort()) {
 
-							ConfigurationGroup configurationGroup = unitType == UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
-							configurationGroup.setMute(comPort, FalseOrTrue.FALSE);
-							final DeviceDebugGroup deviceDebugGroup = unitType == UnitType.CONVERTER ? new DeviceDebugGroup() : new irt.buc.groups.DeviceDebugGroup(address);
-							signalGeneratorWorker.setRFOn(OnOrOff.ON);
+					if (inputPower || outputPower) {
+						boolean ip = inputPower;
+						boolean op = outputPower;
+						boolean ipBeginningOfTheTest = true;
+						int ipStartCount = 0;
+						boolean opBeginningOfTheTest = true;
+						int opStartCount = 0;
 
-							long inUnitValue = Long.MIN_VALUE;
-							long outputRegValue = Long.MIN_VALUE;
-							long tmpRegValue;
-							ValueDouble sgPower = new ValueDouble(0, 1);
-							ValueDouble pmPower = new ValueDouble(0, 1);
-							ValueDouble backupSgPower = new ValueDouble(0, 1);
-							sgPower.setValue(signalGeneratorWorker.getPower());
-							backupSgPower.setValue(sgPower.getValue());
+						ConverterWorker converterWorker = unitType == UnitType.CONVERTER ? new ConverterWorker() : new BucWorker(address);
+						converterWorker.setMute(comPort, false);
+						signalGeneratorWorker.setRFOn(OnOrOff.ON);
 
-							for (int i = 0; i < numberOfSteps && (ip || op); i++) {
-								Thread.sleep(1000);
-								//Input Power
+						long inUnitValue = Long.MIN_VALUE;
+						long outputRegValue = Long.MIN_VALUE;
+						long tmpRegValue;
+						ValueDouble sgPower = new ValueDouble(0, 1);
+						ValueDouble pmPower = new ValueDouble(0, 1);
+						ValueDouble backupSgPower = new ValueDouble(0, 1);
+						sgPower.setValue(signalGeneratorWorker.getPower());
+						backupSgPower.setValue(sgPower.getValue());
 
-							    Future<String> powerMetter = getPowerMetter(op, comPort);
-							    Future<RegisterValue> inputPowerDetector = getPowerDetector(ip, comPort, deviceDebugGroup, ADC.INPUT_POWER);
+						ADCInterface outputAdc = null;
+						if (unitType == UnitType.CONVERTER)
 
-							    if(inputPowerDetector!=null){
-							    	RegisterValue inputAdcRegister = inputPowerDetector.get();
-									tmpRegValue = inputAdcRegister.getValue().getValue();
-							    	logger.trace("outputAdcRegister={}", inputAdcRegister);
-									if(tmpRegValue > inUnitValue){
-										inUnitValue = tmpRegValue;
-										inputPowerMonitor.setRowValues(inUnitValue, sgPower.getDouble());
-									}else
-										ip = false;
-							    }
+							outputAdc = ConverterADC.OUTPUT_POWER;
+						else
+							switch (outoutPowerDetectorSource) {
+							case OUTPUT_DEVICE_CURRENT:
+								outputAdc = BucADC.DEVICE_CURRENT_1_AVERAGE;
+								break;
+							default:
+								logger.warn("TODO - {}", outoutPowerDetectorSource);// TODO
+							}
 
-							    Future<RegisterValue> outputPowerDetector = getPowerDetector(op, comPort, deviceDebugGroup, ADC.OUTPUT_POWER);
-							    if(outputPowerDetector!=null && powerMetter!=null){
-							    	RegisterValue outputAdcRegister = outputPowerDetector.get();
-									tmpRegValue = outputAdcRegister.getValue().getValue();
-							    	logger.trace("outputAdcRegister={}", outputAdcRegister);
-									boolean put = Double.compare(tmpRegValue, outputRegValue)>0;
+						for (int i = 0; running && i < numberOfSteps && (ip || op); i++) {
+							if(unitType==UnitType.BUC && op)
+								Thread.sleep(2000);
 
-									if(put || beginningOfTheTest){
+							Future<String> powerMetter = getPowerMetter(op, comPort);
 
-										if (beginningOfTheTest)
+							// Input Power
+							Future<RegisterValue> inputPowerDetector = getCurrent(ip, comPort, converterWorker.getDeviceDebugGroup(), ConverterADC.INPUT_POWER);
+
+							inputPower(inputPowerDetector);
+							if (inputPowerDetector != null) {
+								RegisterValue inputAdcRegister = inputPowerDetector.get();
+								tmpRegValue = inputAdcRegister.getValue().getValue();
+								logger.debug("outputAdcRegister.getValue()={}, sgPower={}", tmpRegValue, sgPower);
+								boolean put = Double.compare(tmpRegValue, inUnitValue) > 0;
+
+								if (put || ipBeginningOfTheTest) {
+
+									if (ipBeginningOfTheTest)
+										if (!put) {
+											ipStartCount = 0;
+											inputPowerMonitor.clearTable();
+										} else if (ipStartCount > 3)
+											ipBeginningOfTheTest = false;
+										else
+											ipStartCount++;
+
+									inUnitValue = tmpRegValue;
+									inputPowerMonitor.setRowValues(inUnitValue, sgPower.getDouble());
+								} else
+									ip = false;
+							}
+
+							// Output Power
+							if (outputAdc != null) {
+								Future<RegisterValue> outputCurrentDetector = getCurrent(op, comPort, converterWorker.getDeviceDebugGroup(), outputAdc);
+								if (outputCurrentDetector != null && powerMetter != null) {
+
+									tmpRegValue = outputCurrentDetector.get().getValue().getValue();
+									logger.trace("outputAdcRegister.getValue()={}", tmpRegValue);
+
+									boolean put = Double.compare(tmpRegValue, outputRegValue) > 0;
+									if (put || opBeginningOfTheTest) {
+
+										if (opBeginningOfTheTest)
 											if (!put) {
 												opStartCount = 0;
 												outputPowerMonitor.clearTable();
-											} else if (opStartCount > 2)
-												beginningOfTheTest = false;
+											} else if (opStartCount > 3)
+												opBeginningOfTheTest = false;
 											else
 												opStartCount++;
 
 										outputRegValue = tmpRegValue;
 
 										String power = powerMetter.get();
-										logger.trace("beginningOfTheTest={}, put={}, opStartCount={}; Power Meter = {}", beginningOfTheTest, put, opStartCount, power);
+										logger.debug("\n\toutputRegValue={};\n\tPower Meter = {};\n\tbeginningOfTheTest={}, put={}, opStartCount={}", outputRegValue, power, opBeginningOfTheTest, put, opStartCount);
 										pmPower.setValue(power);
-										
-										if(put)
+
+										if (put)
 											outputPowerMonitor.setRowValues(outputRegValue, pmPower.getDouble());
-									}else{
-										if(op){
-											configurationGroup.setMute(comPort, FalseOrTrue.TRUE);
+
+									} else {
+										if (op) {
+											converterWorker.setMute(comPort, true);
 											op = false;
 										}
 									}
-							    }
-
-								sgPower.add(valueStep.getValue());
-								signalGeneratorWorker.setPower(sgPower.getValue());
+								}
 							}
 
-							configurationGroup.setMute(comPort, FalseOrTrue.TRUE);
-							signalGeneratorWorker.setRFOn(OnOrOff.OFF);
-							signalGeneratorWorker.setPower(backupSgPower.getValue());
+							sgPower.add(valueStep.getValue());
+							signalGeneratorWorker.setPower(sgPower.getValue());
 						}
+
+						converterWorker.setMute(comPort, true);
+						signalGeneratorWorker.setRFOn(OnOrOff.OFF);
+						signalGeneratorWorker.setPower(backupSgPower.getValue());
 					}
 				} catch (Exception e) {
 					logger.catching(e);
+					JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 				}
+				logger.debug("Callibration Ends.");
+			}
+
+			private void inputPower(Future<RegisterValue> inputPowerDetector) {
+				// TODO Auto-generated method stub
+				
 			}
 
 			private Future<String> getPowerMetter(boolean isOutputPower, ComPort comPort) {
@@ -305,20 +369,22 @@ public class Controller {
 				return future;
 			}
 
-			protected Future<RegisterValue> getPowerDetector(boolean isInputPower, final ComPort comPort, final DeviceDebugGroup deviceDebugGroup, final ADC adc) {
+			protected Future<RegisterValue> getCurrent(boolean doMeasurement, final ComPort comPort, final DeviceDebugGroup deviceDebugGroup, final ADCInterface adc) {
+				logger.entry(doMeasurement, comPort, deviceDebugGroup, adc);
 
 				Future<RegisterValue> future = null;
-				if (isInputPower) {
+				if (doMeasurement) {
+
 					ExecutorService executor = Executors.newSingleThreadExecutor();
 					Callable<RegisterValue> callable = new Callable<RegisterValue>() {
 						@Override
 						public RegisterValue call() throws Exception {
-							return deviceDebugGroup.getADCRegister(comPort, adc, 5);
+							return deviceDebugGroup.getADCRegister(comPort, adc, unitType==UnitType.BUC ? 30 : 10);
 						}
 					};
 					future = executor.submit(callable);
 				}
-				return future;
+				return logger.exit(future);
 			}
 		});
 	int priority = t.getPriority();
@@ -326,6 +392,8 @@ public class Controller {
 			t.setPriority(priority-1);
 		t.setDaemon(true);
 		t.start();
+
+		return t;
 	}
 
 	public synchronized String getSgFrequency() {
@@ -335,6 +403,7 @@ public class Controller {
 				freq = signalGeneratorWorker.getFrequency();
 			} catch (Exception e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		return freq;
 	}
@@ -346,6 +415,7 @@ public class Controller {
 				freq = signalGeneratorWorker.setFrequency(text);
 			} catch (Exception e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		return freq;
 	}
@@ -360,6 +430,7 @@ public class Controller {
 					power = signalGeneratorWorker.setPower(-1000);
 			} catch (Exception e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		return power;
 	}
@@ -371,6 +442,7 @@ public class Controller {
 				power = signalGeneratorWorker.getPower();
 			} catch (Exception e) {
 				logger.catching(e);
+				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 			}
 		return power;
 	}
@@ -424,11 +496,18 @@ public class Controller {
 	public FalseOrTrue setConverterMute(FalseOrTrue falseOrTrue) {
 		FalseOrTrue mute = null;
 		try(ComPort comPort = openConverterPort()){
-			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
-			mute = configurationGroup.setMute(comPort, falseOrTrue);
+			mute = setMute(comPort, falseOrTrue);
 		} catch (Exception e) {
 			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
 		}
+		return mute;
+	}
+
+	public FalseOrTrue setMute(ComPort comPort, FalseOrTrue falseOrTrue) {
+		FalseOrTrue mute;
+		ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
+		mute = configurationGroup.setMute(comPort, falseOrTrue);
 		return mute;
 	}
 
@@ -468,10 +547,20 @@ public class Controller {
 
 	public void setUnitType(UnitType unitType) {
 		this.unitType = unitType;
-		lblConverter.setText(unitType.name());
+
+		if(lblConverter!=null)
+			lblConverter.setText(unitType.name());
 	}
 
 	public void setAddress(byte address) {
 		this.address = address;
+	}
+
+	public void setOutoutPowerDetectorSource(OutoutPowerDetectorSource outoutPowerDetectorSource) {
+		this.outoutPowerDetectorSource = outoutPowerDetectorSource;
+	}
+
+	public void stop() {
+		running = false;
 	}
 }

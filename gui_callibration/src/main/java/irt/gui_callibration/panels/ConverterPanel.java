@@ -316,10 +316,10 @@ public class ConverterPanel extends JPanel {
 			protected Void doInBackground() throws Exception {
 				logger.entry(controller);
 
+				clearInfo();
+
 				if(rdbtnConverter.isSelected() || rdbtnBuc.isSelected())
 					fillInfo(controller.getDeviceInformation(btnMute, txtFrequency));
-				else
-					clearInfo();
 
 				logger.exit();
 				return null;
