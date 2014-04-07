@@ -1,5 +1,6 @@
 package irt.gui_callibration.panels;
 
+import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.CallibrationMonitor;
 import irt.gui_callibration.controller.Controller;
 import irt.measurement.data.Table;
@@ -23,19 +24,22 @@ import javax.swing.border.TitledBorder;
 public abstract class PowerPanelAbstract extends JPanel implements CallibrationMonitor {
 	private static final long serialVersionUID = 1L;
 
+	private JLabel lblSgValue;
+	private JLabel lblUnitValue;
+	private JTextArea textArea;
+	private JLabel lblPrecision;
+	private JTextField txtPrecision;
+	protected JPanel pnlExtra;
+
 	protected Table table;
 
-	protected JLabel lblSgValue;
-
-	protected JLabel lblUnitValue;
-
-	protected JTextArea textArea;
-	protected JLabel lblPrecision;
-	protected JTextField txtPrecision;
+	protected UnitType unitType;
 
 	public PowerPanelAbstract(Controller controller, String title) {
 		setBorder(new TitledBorder(null, title, TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		
+
+		unitType = controller.getUnitType();
+
 		JLabel lblSg = new JLabel(getToolsName());
 		lblSgValue = new JLabel();
 		JLabel lblUnit = new JLabel("Unit:");
@@ -62,6 +66,8 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 
 		});
 		btnRecalculate.setMargin(new Insets(0, 0, 0, 0));
+		
+		pnlExtra = new JPanel();
 
 		GroupLayout groupLayout = new GroupLayout(this);
 		groupLayout.setHorizontalGroup(
@@ -83,18 +89,20 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addComponent(lblUnit)
 							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(lblUnitValue)))
+							.addComponent(lblUnitValue)
+							.addComponent(pnlExtra)))
 					.addContainerGap())
 		);
 		groupLayout.setVerticalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)
 				.addGroup(groupLayout.createSequentialGroup()
 					.addContainerGap()
-					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
-						.addComponent(lblSg)
-						.addComponent(lblSgValue)
-						.addComponent(lblUnit)
-						.addComponent(lblUnitValue))
+					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
+						.addComponent(lblSg, Alignment.TRAILING)
+						.addComponent(lblSgValue, Alignment.TRAILING)
+						.addComponent(lblUnit, Alignment.TRAILING)
+						.addComponent(lblUnitValue, Alignment.TRAILING)
+						.addComponent(pnlExtra, Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
 						.addComponent(lblPrecision)
@@ -123,15 +131,21 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 	protected abstract String powerLutSize();
 
 	@Override
-	public Double setRowValues(double key, double value) {
+	public void setRowValues(final double key, final double value) {
 
-		lblSgValue.setText(""+value);
-		lblUnitValue.setText(""+key);
+		new SwingWorker<Void, Void>(){
 
-		Double oldValue = table.add(key, value);
-		textArea.setText(table.toString());
+			@Override
+			protected Void doInBackground() throws Exception {
+				lblSgValue.setText(""+value);
+				lblUnitValue.setText(""+key);
 
-		return oldValue;
+				table.add(key, value);
+				textArea.setText(table.toString());
+				return null;
+			}
+			
+		}.execute();
 	}
 
 	protected void setPrecision() {
@@ -142,6 +156,7 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 				String text = txtPrecision.getText();
 				if(table!=null && text!=null && !(text = text.replaceAll("[^\\d.]", "")).isEmpty())
 					table.setAccuracy(Double.parseDouble(text));
+				
 				textArea.setText(table.toString());
 				return null;
 			}

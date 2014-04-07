@@ -19,6 +19,7 @@ public class Table {
 	private String lutValueName;
 
 	private double accuracy;
+	private double multiplier;
 
 	public Double add(double key, double value){
 		return mapTable.put(key, value);
@@ -74,12 +75,11 @@ public class Table {
 				if(mapTableToShow.isEmpty())
 					mapTableToShow.put(key, value);
 				else{
+					//Check if next value is less or equals
 					if(isLessOrEquals(mapTableToShow, key, value))
-
 						if(mapTableToShow.size()<=3){
 							factors.clear();
 							mapTableToShow.clear();
-							mapTableToShow.put(key, value);
 						}else
 							break;
 
@@ -121,22 +121,54 @@ public class Table {
 		double abs = Math.abs(100 - peek*100/poll);
 		logger.trace("factors={}, abs={}, accuracy={}, poll={}, peek={}", factors, abs, accuracy, poll, peek);
 
-		return logger.exit(Double.compare(abs, accuracy)<=0);
+		boolean result = Double.compare(abs, accuracy)<=0;
+		if(result){
+			factors.clear();
+			factors.add(poll);
+		}
+		return logger.exit(result);
+	}
+
+	public void clear() {
+		mapTable.clear();
+	}
+
+	public void setMultiplier(String multiplier) {
+		if(multiplier==null || multiplier.isEmpty())
+			this.multiplier = 0;
+		else{
+			double m = Double.parseDouble(multiplier);
+			this.multiplier = m>0 ? m : 0;
+		}
+	}
+
+	public double getMultiplier() {
+		return multiplier;
+	}
+
+	public void setMultiplier(double multiplier) {
+		this.multiplier = multiplier;
 	}
 
 	@Override
 	public String toString() {
 
 		Map<Double, Double> mapTableToShow = toAverage();
+		if(multiplier>0){
+			Iterator<Double> iterator = mapTableToShow.keySet().iterator();
+			while(iterator.hasNext()){
+				Double key = iterator.next();
+				Double value = mapTableToShow.get(key);
+				mapTableToShow.remove(key);
+				mapTableToShow.put(key*multiplier, value);
+			}
+		}
+
 		String table = (lutSizeName!=null ? lutSizeName+"\t" : "")+mapTableToShow.size()+"\n";
 
 		for(Double l:mapTableToShow.keySet())
 			table += (lutValueName!=null ? lutValueName+"\t" : "")+Math.round(l)+"\t"+mapTableToShow.get(l)+"\n";
 
 		return table;
-	}
-
-	public void clear() {
-		mapTable.clear();
 	}
 }

@@ -26,7 +26,7 @@ public class CallibrationGui extends JFrame {
 
 	private static final Logger logger = (Logger) LogManager.getLogger();
 
-	private Controller controller = new Controller();
+	private Controller controller = new Controller(this);
 	private JPanel contentPane;
 
 	public static void main(String[] args) {

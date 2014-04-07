@@ -25,36 +25,36 @@ public class TableTest {
 		String string = table.toString();
 		logger.trace(string);
 		assertEquals("6\n"
-					+ "1.0 1.0\n"
-					+ "2.0 4.0\n"
-					+ "3.0 7.0\n"
-					+ "4.0 10.0"
-					+ "\n"
-					+ "5.0 13.0\n"
-					+ "6.0 16.0\n",
+					+ "1	1.0\n"
+					+ "2	4.0\n"
+					+ "3	7.0\n"
+					+ "4	10.0\n"
+					+ "5	13.0\n"
+					+ "6	16.0\n",
 				string);
 
 		table.setLutSizeName("lut-size");
 		table.setLutValueName("lut-value");
 		string = table.toString();
 		logger.trace(string);
-		assertEquals("lut-size 6\n"
-					+ "lut-value 1.0 1.0\n"
-					+ "lut-value 2.0 4.0\n"
-					+ "lut-value 3.0 7.0\n"
-					+ "lut-value 4.0 10.0\n"
-					+ "lut-value 5.0 13.0\n"
-					+ "lut-value 6.0 16.0\n",
+		assertEquals("lut-size	6\n"
+					+ "lut-value	1	1.0\n"
+					+ "lut-value	2	4.0\n"
+					+ "lut-value	3	7.0\n"
+					+ "lut-value	4	10.0\n"
+					+ "lut-value	5	13.0\n"
+					+ "lut-value	6	16.0\n",
 				string);
 	}
 
 	@Test
 	public void toAverage() {
+		logger.entry();
 		try {
 			Table table = new Table();
 			table.setAccuracy(1);
 
-			for(int d=0; d<5; d++)
+			for(int d=0; d<10; d++)
 				table.add(d, d);
 
 			String string = table.toString();
@@ -62,5 +62,6 @@ public class TableTest {
 		} catch (Exception ex) {
 			logger.catching(ex);
 		}
+		logger.exit();
 	}
 }

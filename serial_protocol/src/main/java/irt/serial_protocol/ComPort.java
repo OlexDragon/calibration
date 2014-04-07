@@ -94,11 +94,6 @@ if(!isRun())
 do{
 
 	Checksum checksum = null;
-	synchronized (this) {
-		if(openPort()){
-			setParams(SerialPort.BAUDRATE_115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-		}
-	}
 
 			timer.restart();
 			clear();
@@ -557,8 +552,10 @@ do{
 
 			if (run && !isOpened) {
 				isOpened = super.openPort();
-				if (isOpened)
+				if (isOpened){
 					addEventListener(serialPortEvent);
+					setParams(SerialPort.BAUDRATE_115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+				}
 			}
 		}
 		return logger.exit(isOpened);

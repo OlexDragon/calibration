@@ -5,7 +5,7 @@ import irt.measurement.data.Table;
 public interface CallibrationMonitor {
 
 	public void setTable(Table table);
-	public Double setRowValues(double key, double value);
+	public void setRowValues(double key, double value);
 	public void clearTable();
 
 }
