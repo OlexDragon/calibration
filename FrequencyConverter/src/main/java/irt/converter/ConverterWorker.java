@@ -1,10 +1,12 @@
 package irt.converter;
 
+import irt.converter.data.UnitValue;
 import irt.converter.groups.ConfigurationGroup;
 import irt.converter.groups.DeviceDebugGroup;
 import irt.converter.groups.DeviceInformationGroup;
 import irt.converter.groups.MeasurementGroup;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.RegisterValue;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 public class ConverterWorker {
@@ -36,5 +38,38 @@ public class ConverterWorker {
 
 	public boolean setMute(ComPort comPort, boolean mute){
 		return configurationGroup.setMute(comPort, mute ? FalseOrTrue.TRUE : FalseOrTrue.FALSE)==FalseOrTrue.TRUE;
+	}
+
+	public UnitValue getAttenuation(ComPort comPort){
+		return configurationGroup.getAttenuation(comPort);
+	}
+
+	public UnitValue setAttenuation(ComPort comPort, short attenuation){
+		return configurationGroup.setAttenuation(comPort, attenuation);
+	}
+
+	public DeviceInformationGroup getUnitInfo(ComPort comPort){
+		deviceInformationGroup.getAll(comPort);
+		return deviceInformationGroup;
+	}
+
+	public RegisterValue getOutputPower(ComPort comPort){
+		return deviceDebugGroup.getOutputPower(comPort);
+	}
+
+	public ConfigurationGroup getConfigurationGroup() {
+		return configurationGroup;
+	}
+
+	public DeviceDebugGroup getDeviceDebugGroup() {
+		return deviceDebugGroup;
+	}
+
+	public DeviceInformationGroup getDeviceInformationGroup() {
+		return deviceInformationGroup;
+	}
+
+	public MeasurementGroup getMonitorConverterGroup() {
+		return monitorConverterGroup;
 	}
 }

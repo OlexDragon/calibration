@@ -23,6 +23,7 @@ public class ComPortTest {
 
 	@Before
 	public void setUp() throws Exception {
+		logger.entry();
 		linkedPacket = new LinkedPacket(new LinkHeader((byte)254, (byte)0, (short)0));
 		PacketHeader header = new PacketHeader();
 
@@ -41,6 +42,7 @@ public class ComPortTest {
 
 	@Test
 	public void test() throws Exception {
+		logger.entry();
 		Packet packet;
 		try (ComPort comPort = new ComPort("COM1")){
 			packet = comPort.send(linkedPacket);

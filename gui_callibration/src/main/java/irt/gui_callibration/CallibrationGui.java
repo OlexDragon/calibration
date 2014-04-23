@@ -9,8 +9,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -25,6 +30,8 @@ public class CallibrationGui extends JFrame {
 	private static final long serialVersionUID = 9152419965306044578L;
 
 	private static final Logger logger = (Logger) LogManager.getLogger();
+
+	public static final Preferences PREFS = Preferences.userRoot().node("IRT Technologies inc.");
 
 	private Controller controller = new Controller(this);
 	private JPanel contentPane;
@@ -42,11 +49,24 @@ public class CallibrationGui extends JFrame {
 		});
 	}
 
-
 	public CallibrationGui() {
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				int extendedState = getExtendedState();
+				PREFS.putInt("ExtendedState", extendedState);
+				if(extendedState==Frame.NORMAL){
+					Rectangle bounds = getBounds();
+					PREFS.putInt("x", bounds.x);
+					PREFS.putInt("y", bounds.y);
+					PREFS.putInt("width", bounds.width);
+					PREFS.putInt("height", bounds.height);
+				}
+			}
+		});
+
 		setMinimumSize(new Dimension(650, 300));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -81,5 +101,9 @@ public class CallibrationGui extends JFrame {
 		}
 
 		controller.setTitles(titles);
+
+		int extendedState = PREFS.getInt("ExtendedState", Frame.NORMAL);
+		setExtendedState(extendedState);
+		setBounds(PREFS.getInt("x", 100), PREFS.getInt("y", 100), PREFS.getInt("width", 400), PREFS.getInt("height", 100));
 	}
 }

@@ -8,6 +8,7 @@
 package irt.serial_protocol.data.packet;
 
 import irt.serial_protocol.data.RegisterValue;
+import irt.serial_protocol.data.value.Value;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -462,7 +463,8 @@ public class Packet {
 			else if(value instanceof RegisterValue) {
 				RegisterValue v = (RegisterValue)value;
 				bytes = concat(intToBytes(v.getIndex()), intToBytes(v.getAddr()));
-			}
+			}else if(value instanceof Value)
+				bytes = longToBytes(((Value)value).getValue());
 		}
 
 		return bytes;

@@ -1,6 +1,7 @@
 package irt.gui_callibration.panels;
 
 import irt.gui_callibration.controller.Controller;
+import irt.serial_protocol.ComPort;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -8,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.prefs.Preferences;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
@@ -20,11 +22,16 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.LineBorder;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 
 import jssc.SerialPortList;
 
 public class ToolsPanel extends JPanel {
 	private static final long serialVersionUID = 6433123493656611447L;
+
+	protected static final String SERIAL_PORT = "toolsSerialPort";
+	protected static final Preferences PREFS = Preferences.userRoot().node("IRT Technologies inc.");
 
 	private JComboBox<String> comboBox;
 	private JCheckBox chckbxSignalGenerator;
@@ -33,6 +40,34 @@ public class ToolsPanel extends JPanel {
 	private JLabel lblPowerMeterId;
 
 	public ToolsPanel(final Controller controller) {
+		addAncestorListener(new AncestorListener() {
+			private String[] portNames;
+			public void ancestorAdded(AncestorEvent event) {
+
+				String[] portNames = SerialPortList.getPortNames();
+				if (portNames != null && (this.portNames == null || portNames.length != this.portNames.length)) {
+
+					DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(portNames);
+					defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
+					ComPort comPort = controller.getConverterPort();
+
+					if (comPort != null)
+						defaultComboBoxModel.removeElement(comPort.getPortName());
+
+					comboBox.setModel(defaultComboBoxModel);
+					comboBox.setSelectedItem(PREFS.get(SERIAL_PORT, "COM1"));
+					this.portNames = portNames;
+
+				}if(portNames == null && this.portNames!=null){
+					comboBox.setModel(new DefaultComboBoxModel<String>());
+					this.portNames = null;
+				}
+			}
+			public void ancestorMoved(AncestorEvent event) {
+			}
+			public void ancestorRemoved(AncestorEvent event) {
+			}
+		});
 		setName("Tools");
 		
 		lblSgId = new JLabel();
@@ -67,9 +102,7 @@ public class ToolsPanel extends JPanel {
 			}
 		});
 
-		DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(SerialPortList.getPortNames());
-		defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
-		comboBox = new JComboBox<>(defaultComboBoxModel);
+		comboBox = new JComboBox<>();
 		comboBox.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -81,7 +114,8 @@ public class ToolsPanel extends JPanel {
 						boolean comPortIsSelected = comboBox.getSelectedIndex()!=0;
 						String portName = (String) comboBox.getSelectedItem();
 
-						controller.setToolsPort(comPortIsSelected ? portName : null);
+						if(controller.setToolsPort(comPortIsSelected ? portName : null))
+							PREFS.put(SERIAL_PORT, portName);
 
 						chckbxPowerMeter.setEnabled(comPortIsSelected);
 						if(chckbxPowerMeter.isSelected()){
@@ -100,7 +134,6 @@ public class ToolsPanel extends JPanel {
 				}.execute();
 			}
 		});
-		comboBox.setSelectedIndex(0);
 		
 		JPanel panel = new JPanel();
 		panel.setBorder(new LineBorder(new Color(0, 0, 0)));

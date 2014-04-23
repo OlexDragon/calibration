@@ -94,7 +94,7 @@ public class CallibrationPanel extends JPanel {
 					txtSqFreq.setText(controller.setFrequency(txtSqFreq.getText()));
 					txtSgPower.setText(controller.setSignalGeneratorStartPower(txtSgPower.getText()));
 					controller.setSteps(txtSteps.getText(), txtOneStep.getText());
-					final Thread callibrationThread = controller.startCallibration();
+					final Thread callibrationThread = controller.startPowerCallibration();
 					button.setText("Stop");
 
 					new SwingWorker<Void, Void>() {

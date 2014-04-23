@@ -2,14 +2,12 @@
 <Configuration>
   <Appenders>
     <Console name="STDOUT" target="SYSTEM_OUT">
-    	<PatternLayout pattern="%-5p %d [%t] %C{2} %M (%F:%L) - %m%xEx%n"/>
+    	<PatternLayout pattern="%d [%t] %C{2} %M (%F:%L) %-5p - %m%xEx%n"/>
     </Console>
   </Appenders>
 
   <Loggers>
-  <logger name="irt.gui_callibration.controller.ControllerTest" level="all"/>
-
-    <Root level="warn">
+    <Root level="info">
       <AppenderRef ref="STDOUT"/>
     </Root>
   </Loggers>

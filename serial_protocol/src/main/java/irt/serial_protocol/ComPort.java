@@ -297,7 +297,6 @@ do{
 			if (needAnswer){
 				while (!contains(read, waitFor.getBytes()) && wait(1, waitTyme)) {
 					byte[] r = readBytes(getInputBufferBytesCount());
-					logger.trace("{}", r);
 
 					if (read == null)
 						read = r;

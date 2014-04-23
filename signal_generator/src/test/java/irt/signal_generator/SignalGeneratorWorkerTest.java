@@ -3,6 +3,7 @@ package irt.signal_generator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import irt.prologix.communication.PrologixWorker;
+import irt.prologix.communication.PrologixWorkerTest;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
 import irt.serial_protocol.ComPort;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
@@ -17,14 +18,14 @@ import org.junit.Test;
 
 public class SignalGeneratorWorkerTest {
 
-	private static final String COM_PORT = "COM7";
+	private static final String COM_PORT_NAME = PrologixWorkerTest.COM_PORT_NAME;
 
 	private Logger logger = (Logger) LogManager.getLogger();
 
 	@Test
 	public void constuctorTest() {
 		logger.entry();
-		try(ComPort comPort = new ComPort(COM_PORT)){
+		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
 			SG_8648 signalGenerator = new SG_8648();
 			new SignalGeneratorWorker(prologixWorker, signalGenerator);
@@ -43,7 +44,7 @@ public class SignalGeneratorWorkerTest {
 	@Test
 	public void setFrequencyTest() {
 		logger.entry();
-		try(ComPort comPort = new ComPort(COM_PORT)){
+		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
 			SG_8648 signalGenerator = new SG_8648();
 			SignalGeneratorWorker signalGeneratorWorker = new SignalGeneratorWorker(prologixWorker, signalGenerator);
@@ -67,7 +68,7 @@ public class SignalGeneratorWorkerTest {
 	@Test
 	public void setPowerTest() {
 		logger.entry();
-		try(ComPort comPort = new ComPort(COM_PORT)){
+		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
 			SG_8648 signalGenerator = new SG_8648();
 			SignalGeneratorWorker signalGeneratorWorker = new SignalGeneratorWorker(prologixWorker, signalGenerator);
@@ -91,7 +92,7 @@ public class SignalGeneratorWorkerTest {
 	@Test
 	public void setRfOnTest(){
 		logger.entry();
-		try(ComPort comPort = new ComPort(COM_PORT)){
+		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
 			logger.trace("new SG_8648()");
 			SG_8648 signalGenerator = new SG_8648();

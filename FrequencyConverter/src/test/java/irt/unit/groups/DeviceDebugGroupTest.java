@@ -2,8 +2,8 @@ package irt.unit.groups;
 
 import static org.junit.Assert.assertNotNull;
 import irt.converter.groups.DeviceDebugGroup;
-import irt.converter.groups.DeviceDebugGroup.ADC;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.RegisterValue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
@@ -15,11 +15,16 @@ public class DeviceDebugGroupTest {
 
 	@Test
 	public void getADCRegister() {
-		try(ComPort comPort = new ComPort("COM6")){
+		logger.entry();
+		try(ComPort comPort = new ComPort(ConfigurationTest.COM_PORT)){
 
 			DeviceDebugGroup deviceDebugGroup = new DeviceDebugGroup();
-			assertNotNull(deviceDebugGroup.getADCRegister(comPort, ADC.INPUT_POWER));
-			assertNotNull(deviceDebugGroup.getADCRegister(comPort, ADC.OUTPUT_POWER));
+			RegisterValue inputPower = deviceDebugGroup.getInputPower(comPort);
+			RegisterValue outputPower = deviceDebugGroup.getOutputPower(comPort);
+
+			logger.trace("inputPower={}, ={}", inputPower, outputPower);
+			assertNotNull(inputPower);
+			assertNotNull(outputPower);
 
 		} catch (Exception e) {
 			logger.catching(e);

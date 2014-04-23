@@ -18,7 +18,7 @@ public class MonitorTest extends TestCase {
 	public MonitorTest() throws Exception {
 		Packet packet = MeasurementGroup.GET_ALL;
 		logger.trace(packet);
-		try(ComPort comPort = new ComPort("COM6")){
+		try(ComPort comPort = new ComPort(ConfigurationTest.COM_PORT)){
 			packet = comPort.send(packet);
 		}
 		monitorConverter = new MeasurementGroup();

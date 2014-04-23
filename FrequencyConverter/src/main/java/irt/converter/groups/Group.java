@@ -11,6 +11,7 @@ import irt.serial_protocol.data.packet.Packet;
 import irt.serial_protocol.data.packet.PacketHeader;
 import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
+import irt.serial_protocol.data.value.Value;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
@@ -54,15 +55,30 @@ public abstract class Group {
 	}
 
 	public void setPacket(Packet packet) {
-		logger.entry(packet);
+		logger.trace("\nthis.packet = {},\npacket to set = {}", this.packet, packet);
 		if(packet!=null && packet.getHeader().getGroupId()==getGroup().getId())
 			this.packet = packet;
 	}
 
 	public Packet getPacket(ComPort comPort, Parameter parameter, PacketId packetId) {
 		logger.entry(comPort, parameter, packetId);
+
 		if(comPort!=null && comPort.isOpened()){
 			Packet p = createPacket(parameter, packetId);
+			logger.trace(p);
+
+			setPacket(comPort.send(p));
+		}else
+			packet = null;
+
+		return logger.exit(packet);
+	}
+
+	public Packet getPacket(ComPort comPort, Parameter parameter, PacketId packetId, Value value) {
+		logger.entry(comPort, parameter, packetId, value);
+
+		if(comPort!=null && comPort.isOpened()){
+			Packet p = createPacket(parameter, packetId, value);
 			logger.trace(p);
 
 			setPacket(comPort.send(p));

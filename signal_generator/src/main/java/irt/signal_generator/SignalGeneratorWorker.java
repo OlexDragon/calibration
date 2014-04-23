@@ -3,6 +3,7 @@ package irt.signal_generator;
 import irt.prologix.communication.PrologixWorker;
 import irt.prologix.communication.Tools.Commands;
 import irt.prologix.communication.Worker;
+import irt.prologix.data.PrologixGpibUsbController.CommandsInterface;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
 import irt.prologix.data.PrologixGpibUsbController.Eos;
 import irt.signal_generator.data.SG_8648;
@@ -66,34 +67,42 @@ public class SignalGeneratorWorker extends Worker{
 	}
 
 	public void setFrequency(long value) throws Exception {
-		logger.entry(value);
 		checkAddress();
-		getPrologixWorker().sendCommand(signalGenerator.getFrequencySetCommand(value), false, Eos.LF, 1000);
-		logger.exit();
+		CommandsInterface frequencySetCommand = signalGenerator.getFrequencySetCommand(value);
+		logger.debug("{}", frequencySetCommand);
+		getPrologixWorker().sendCommand(frequencySetCommand, false, Eos.LF, 1000);
 	}
 
 	public String setFrequency(String value) throws Exception {
 		logger.entry(value);
+
 		checkAddress();
-		getPrologixWorker().sendCommand(signalGenerator.getFrequencySetCommand(value), false, Eos.LF, 1000);
-		logger.exit();
-		return signalGenerator.getFrequency();
+		CommandsInterface frequencySetCommand = signalGenerator.getFrequencySetCommand(value);
+		logger.debug("{}", frequencySetCommand);
+		getPrologixWorker().sendCommand(frequencySetCommand, false, Eos.LF, 1000);
+		
+		return logger.exit(signalGenerator.getFrequency());
 	}
 
 	public String setPower(long value) throws Exception {
 		logger.entry(value);
+
 		checkAddress();
-		getPrologixWorker().sendCommand(signalGenerator.getPowerSetCommand(value), false, Eos.LF, 1000);
-		logger.exit();
-		return signalGenerator.getPower();
+		CommandsInterface powerSetCommand = signalGenerator.getPowerSetCommand(value);
+		logger.debug("{}", powerSetCommand);
+		getPrologixWorker().sendCommand(powerSetCommand, false, Eos.LF, 1000);
+		
+		return logger.exit(signalGenerator.getPower());
 	}
 
 	public String setPower(String value) throws Exception {
 		logger.entry(value);
 		checkAddress();
-		getPrologixWorker().sendCommand(signalGenerator.getPowerSetCommand(value), false, Eos.LF, 1000);
-		logger.exit();
-		return signalGenerator.getPower();
+		CommandsInterface powerSetCommand = signalGenerator.getPowerSetCommand(value);
+		logger.debug("{}", powerSetCommand);
+		getPrologixWorker().sendCommand(powerSetCommand, false, Eos.LF, 1000);
+		
+		return logger.exit(signalGenerator.getPower());
 	}
 
 	public OnOrOff isRFOn() throws Exception {
@@ -107,10 +116,9 @@ public class SignalGeneratorWorker extends Worker{
 	}
 
 	public void setRFOn(OnOrOff onOrOff) throws Exception {
-		logger.entry(onOrOff);
+		logger.debug(onOrOff);
 		checkAddress();
 		getPrologixWorker().sendCommand(signalGenerator.getRFOnSetCommand(onOrOff), false, Eos.LF, 1000);
-		logger.exit();
 	}
 
 	@Override

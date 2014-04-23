@@ -12,7 +12,7 @@ import irt.converter.groups.DeviceInformationGroup;
 import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.CallibrationMonitor;
 import irt.measurement.data.Table;
-import irt.power_meter.PowerMeterWorler;
+import irt.power_meter.PowerMeterWorker;
 import irt.power_meter.data.EPM_441A;
 import irt.prologix.communication.PrologixWorker;
 import irt.serial_protocol.ComPort;
@@ -50,7 +50,7 @@ public class Controller {
 	private ComPort 				converterComPort;
 	private PrologixWorker 			prologixWorker;
 	private SignalGeneratorWorker 	signalGeneratorWorker;
-	private PowerMeterWorler 		powerMeterWorler;
+	private PowerMeterWorker 		powerMeterWorker;
 
 	private UnitType unitType = UnitType.CONVERTER;
 	private byte address;
@@ -97,18 +97,28 @@ public class Controller {
 	}
 
 	//Tools
-	public synchronized void setToolsPort(String portName) {
-		if(portName!=null)
-			try(ComPort comPort = new ComPort(portName)) {
-				prologixWorker = new PrologixWorker(comPort);
-			} catch (Exception e) {
-				logger.catching(e);
-				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
-			}
-		else{
+	public synchronized boolean setToolsPort(String portName) {
+		logger.entry(portName);
+
+		boolean isSet = false;
+		if(portName!=null){
+			if (prologixWorker == null || !prologixWorker.getComPort().getPortName().equals(portName))
+				try (ComPort comPort = new ComPort(portName)) {
+					prologixWorker = new PrologixWorker(comPort);
+					isSet = true;
+				} catch (Exception e) {
+					logger.catching(e);
+					JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
+				}
+		}else{
 			signalGeneratorWorker = null;
 			prologixWorker = null;
 		}
+		return logger.exit(isSet);
+	}
+
+	public PrologixWorker getPrologixWorker() {
+		return prologixWorker;
 	}
 
 	public ComPort openToolsPort() throws SerialPortException {
@@ -123,16 +133,25 @@ public class Controller {
 	}
 
 	//Converter
-	public void setConverterComPort(String portName) {
-		if(portName!=null)
-			try {
-				converterComPort = new ComPort(portName);
-			} catch (SerialPortException e) {
-				logger.catching(e);
-				JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
-			}
-		else
+	public boolean setConverterComPort(String portName) {
+		logger.entry(portName);
+		boolean wasSet = false;
+
+		if(portName!=null){
+			if (converterComPort == null || !converterComPort.getPortName().equals(portName))
+				try(ComPort comPort = new ComPort(portName)) {
+
+					converterComPort = comPort;
+					wasSet = true;
+
+				} catch (Exception e) {
+					logger.catching(e);
+					JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
+				}
+		}else
 			converterComPort = null;
+
+		return logger.exit(wasSet);
 	}
 
 	public ComPort getConverterPort() {
@@ -147,12 +166,62 @@ public class Controller {
 		return converterComPort;
 	}
 
+	public ValueFrequency setConverterFrequency(String freqStr) {
+		ValueFrequency freqValue = null;
+
+		try(ComPort comPort = openConverterPort()){
+			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address);
+			freqValue = configurationGroup.setFrequency(comPort, freqStr);
+		} catch (Exception e) {
+			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
+		}
+		return freqValue;
+	}
+
+	public FalseOrTrue setConverterMute(FalseOrTrue falseOrTrue) {
+		FalseOrTrue mute = null;
+		try(ComPort comPort = openConverterPort()){
+			mute = setMute(comPort, falseOrTrue);
+		} catch (Exception e) {
+			logger.catching(e);
+			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
+		}
+		return mute;
+	}
+
+	public void getConverterMuteAndFrequency(ComPort comPort, JButton btnMute, JTextField txtFrequency) {
+			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address) ;
+
+			FalseOrTrue mute = configurationGroup.getMute(comPort);
+			if(mute!=null){
+				if(mute==FalseOrTrue.FALSE)
+					btnMute.setText("Mute");
+				else
+					btnMute.setText("Unmute");
+			}else
+				btnMute.setText("N/A");
+
+			Range range = configurationGroup.getFrequencyRange(comPort);
+			if(range!=null){
+				Long frequency = configurationGroup.getFrequency(comPort);
+				logger.debug("frequency={}, {}", frequency, range);
+				if(frequency!=null){
+					valueFrequency = new ValueFrequency(frequency, range.getMinimum(), range.getMaximum());
+					txtFrequency.setText(valueFrequency.toString());
+				}else
+					txtFrequency.setText("N/A");
+			}
+			logger.trace("Mute = {}, Frequency={}", mute, valueFrequency);
+	}
+
 	public synchronized String getPowerMeterId() {
 		String id = "";
 
 		try(ComPort comPort = openToolsPort()){
-			powerMeterWorler = new PowerMeterWorler(prologixWorker, new EPM_441A());
-			id = powerMeterWorler.getId();
+			powerMeterWorker = new PowerMeterWorker(prologixWorker, new EPM_441A());
+			id = powerMeterWorker.getId();
+//			powerMeterWorker.setSingleTriggerMode();
 		} catch (Exception e) {
 			logger.catching(e);
 			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
@@ -208,9 +277,9 @@ public class Controller {
 		return (inputPower || outputPower) && deviceInformation!=null;
 	}
 
-	public Thread startCallibration() {
+	public Thread startPowerCallibration() {
 		Thread t = new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				logger.debug("Start Callibration. inputPower={}, outputPower={}", inputPower, outputPower);
@@ -245,7 +314,9 @@ public class Controller {
 						long tmpRegValue;
 						ValueDouble sgPower = new ValueDouble(0, 1);
 						ValueDouble pmPower = new ValueDouble(0, 1);
+						ValueDouble pmPowOld= new ValueDouble(Long.MIN_VALUE, 1);
 						ValueDouble backupSgPower = new ValueDouble(0, 1);
+						ValueDouble tmpValue = new ValueDouble(0, 1);
 						sgPower.setValue(signalGeneratorWorker.getPower());
 						backupSgPower.setValue(sgPower.getValue());
 
@@ -271,7 +342,6 @@ public class Controller {
 							// Input Power
 							Future<RegisterValue> inputPowerDetector = getCurrent(ip, comPort, converterWorker.getDeviceDebugGroup(), ConverterADC.INPUT_POWER);
 
-							inputPower(inputPowerDetector);
 							if (inputPowerDetector != null) {
 								RegisterValue inputAdcRegister = inputPowerDetector.get();
 								tmpRegValue = inputAdcRegister.getValue().getValue();
@@ -301,7 +371,7 @@ public class Controller {
 								if (outputCurrentDetector != null && powerMetter != null) {
 
 									tmpRegValue = outputCurrentDetector.get().getValue().getValue();
-									logger.trace("outputAdcRegister.getValue()={}", tmpRegValue);
+									logger.debug("outputRegValue={}, outputAdcRegister.getValue()={}", outputRegValue, tmpRegValue);
 
 									boolean put = Double.compare(tmpRegValue, outputRegValue) > 0;
 									if (put || opBeginningOfTheTest) {
@@ -321,8 +391,13 @@ public class Controller {
 										logger.debug("\n\toutputRegValue={};\n\tPower Meter = {};\n\tbeginningOfTheTest={}, put={}, opStartCount={}", outputRegValue, power, opBeginningOfTheTest, put, opStartCount);
 										pmPower.setValue(power);
 
-										if (put)
-											outputPowerMonitor.setRowValues(outputRegValue, pmPower.getDouble());
+										if (put){
+											if(pmPower.getValue()>pmPowOld.getValue()){
+												pmPowOld.setValue(pmPower.getValue());
+												outputPowerMonitor.setRowValues(outputRegValue, pmPower.getDouble());
+											}else if(!opBeginningOfTheTest)
+												op = false;
+										}
 
 									} else {
 										if (op) {
@@ -334,7 +409,10 @@ public class Controller {
 							}
 
 							sgPower.add(valueStep.getValue());
-							signalGeneratorWorker.setPower(sgPower.getValue());
+							String setPower = signalGeneratorWorker.setPower(sgPower.getValue());
+							if(setPower==null || setPower.isEmpty() || !tmpValue.setValue(setPower).equals(sgPower))
+								JOptionPane.showMessageDialog(owner, "oups!");
+							logger.debug("SG value to set={}, set value='{}'", sgPower, setPower);
 						}
 
 						converterWorker.setMute(comPort, true);
@@ -348,11 +426,6 @@ public class Controller {
 				logger.debug("Callibration Ends.");
 			}
 
-			private void inputPower(Future<RegisterValue> inputPowerDetector) {
-				// TODO Auto-generated method stub
-				
-			}
-
 			private Future<String> getPowerMetter(boolean isOutputPower, ComPort comPort) {
 
 				Future<String> future = null;
@@ -361,7 +434,7 @@ public class Controller {
 					Callable<String> callable = new Callable<String>() {
 						@Override
 						public String call() throws Exception {
-							return powerMeterWorler.measure();
+							return powerMeterWorker.measure();
 						}
 					};
 					future = executor.submit(callable);
@@ -467,41 +540,6 @@ public class Controller {
 
 	public boolean isOutputPower() {
 		return outputPower;
-	}
-
-	public void getConverterMuteAndFrequency(ComPort comPort, JButton btnMute, JTextField txtFrequency) {
-			ConfigurationGroup configurationGroup = unitType==UnitType.CONVERTER ? new ConfigurationGroup() : new irt.buc.groups.ConfigurationGroup(address) ;
-
-			FalseOrTrue mute = configurationGroup.getMute(comPort);
-			if(mute!=null){
-				if(mute==FalseOrTrue.FALSE)
-					btnMute.setText("Mute");
-				else
-					btnMute.setText("Unmute");
-			}else
-				btnMute.setText("N/A");
-
-			Range range = configurationGroup.getFrequencyRange(comPort);
-			if(range!=null){
-				Long frequency = configurationGroup.getFrequency(comPort);
-				if(frequency!=null){
-					valueFrequency = new ValueFrequency(frequency, range.getMaximum(), range.getMaximum());
-					txtFrequency.setText(valueFrequency.toString());
-				}else
-					txtFrequency.setText("N/A");
-			}
-			logger.trace("Mute = {}, Frequency={}", mute, valueFrequency);
-	}
-
-	public FalseOrTrue setConverterMute(FalseOrTrue falseOrTrue) {
-		FalseOrTrue mute = null;
-		try(ComPort comPort = openConverterPort()){
-			mute = setMute(comPort, falseOrTrue);
-		} catch (Exception e) {
-			logger.catching(e);
-			JOptionPane.showMessageDialog(owner, e.getLocalizedMessage());
-		}
-		return mute;
 	}
 
 	public FalseOrTrue setMute(ComPort comPort, FalseOrTrue falseOrTrue) {
