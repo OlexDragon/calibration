@@ -70,7 +70,8 @@ public class DeviceInformationGroup extends irt.converter.groups.Group{
 	}
 
 	public String getUptimeCounter(){
-		return calculateTime(getInt(Params.UNIT_UPTIME_COUNTER));
+		Integer counter = getInt(Params.UNIT_UPTIME_COUNTER);
+		return counter!=null ? calculateTime(counter) : "";
 	}
 
 	public static String calculateTime(long seconds) {
@@ -81,5 +82,12 @@ public class DeviceInformationGroup extends irt.converter.groups.Group{
 	    long second = TimeUnit.SECONDS.toSeconds(seconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.SECONDS.toMinutes(seconds));
 
 	    return (day>0 ? day+" day"+(day==1 ? ", " : "s, ") : "")+hours+ ":"+minute+":"+second;
+	}
+
+	@Override
+	public String toString() {
+		return "DeviceInformationGroup [getGroup()=" + getGroup() + ", getSerialNumber()=" + getSerialNumber() + ", getUnitName()=" + getUnitName()
+				+ ", getPartNumber()=" + getPartNumber() + ", getFirmwareVersion()=" + getFirmwareVersion() + ", getFirmwareBuildDate()=" + getFirmwareBuildDate()
+				+ ", getUptimeCounter()=" + getUptimeCounter() + "]";
 	}
 }

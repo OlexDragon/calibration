@@ -8,6 +8,7 @@ import irt.serial_protocol.data.packet.Packet;
 import irt.serial_protocol.data.packet.PacketHeader.Group;
 import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
+import irt.serial_protocol.data.value.ValueFrequency;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 public class ConfigurationGroup extends irt.converter.groups.Group{
@@ -120,5 +121,23 @@ public class ConfigurationGroup extends irt.converter.groups.Group{
 		}
 
 		return logger.exit(value);
+	}
+
+	public ValueFrequency setFrequency(ComPort comPort, String freqStr) {
+		logger.entry(comPort, freqStr);
+		ValueFrequency vf = new ValueFrequency(freqStr, "0", "40 GHz");
+
+		Packet packet = getPacket(comPort, Params.FREQUENCY, PacketId.CONFIGURATION_FREQUENCY, vf);
+		if(packet!=null && packet.getHeader().getType()==Type.RESPONSE.getType()){
+			Payload payload = packet.getPayload(Params.FREQUENCY.getId());
+			logger.trace(payload);
+			if(payload!=null)
+				vf.setValue(payload.getLong());
+			else
+				vf = null;
+		}else
+			vf = null;
+
+		return vf;
 	}
 }

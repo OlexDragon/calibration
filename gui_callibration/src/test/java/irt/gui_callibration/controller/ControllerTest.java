@@ -17,6 +17,7 @@ public class ControllerTest {
 
 	@Test
 	public void test() throws Exception {
+		logger.error("Yes");
 		Controller controller = new Controller(null);
 		controller.setAddress((byte) 254);
 		controller.setUnitType(UnitType.BUC);

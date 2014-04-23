@@ -144,8 +144,9 @@ public class Value extends Observable{
 		logger.exit(this.value);
 	}
 
-	public void setValue(String text) {
+	public Value setValue(String text) {
 		setValue(parseLong(text));
+		return this;
 	}
 
 	public void setValue(double value) {

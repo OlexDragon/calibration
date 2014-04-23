@@ -11,7 +11,7 @@ import org.junit.Test;
 
 public class PrologixWorkerTest {
 
-	private static final String COM_PORT_NAME = "COM7";
+	public static final String COM_PORT_NAME = "COM3";
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 

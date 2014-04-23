@@ -16,10 +16,11 @@ public class ConfigurationTest {
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
-	private static final String COM_PORT = "COM5";
+	public static final String COM_PORT = "COM5";
 
 	@Test
 	public void setGetGainTest() throws Exception {
+		logger.entry();
 		ConfigurationGroup configuration = new ConfigurationGroup();
 		UnitValue unitValue1;
 		UnitValue unitValue2;
@@ -36,6 +37,7 @@ public class ConfigurationTest {
 
 	@Test
 	public void setGetAttenuationTest() throws Exception {
+		logger.entry();
 		UnitValue unitValue1;
 		UnitValue unitValue2;
 
@@ -52,6 +54,7 @@ public class ConfigurationTest {
 
 	@Test
 	public void setGetMute() throws Exception {
+		logger.entry();
 		FalseOrTrue unitValue1;
 		FalseOrTrue unitValue2;
 		FalseOrTrue unitValue3;

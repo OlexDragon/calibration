@@ -48,8 +48,10 @@ public abstract class Worker {
 		if(a!=null){
 			if(a!=addr)
 				prologixWorker.setAddr(addr);
-		}else
+		}else{
+			prologixWorker.setAddr(addr);
 			logger.warn("can not get address");
+		}
 	}
 
 	public String getId() throws Exception {

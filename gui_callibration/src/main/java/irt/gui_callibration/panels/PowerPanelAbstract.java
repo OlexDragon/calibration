@@ -36,6 +36,7 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 	protected UnitType unitType;
 
 	public PowerPanelAbstract(Controller controller, String title) {
+		
 		setBorder(new TitledBorder(null, title, TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		unitType = controller.getUnitType();
@@ -51,6 +52,7 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 		lblPrecision = new JLabel("Precision(%):");
 		
 		txtPrecision = new JTextField();
+		txtPrecision.setText("10");
 		txtPrecision.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setPrecision();
@@ -123,6 +125,10 @@ public abstract class PowerPanelAbstract extends JPanel implements CallibrationM
 		if(table!=null){
 			table.setLutSizeName(powerLutSize());
 			table.setLutValueName(powerLutEntry());
+
+			String text = txtPrecision.getText();
+			if(table!=null && text!=null && !(text = text.replaceAll("[^\\d.]", "")).isEmpty())
+				table.setAccuracy(Double.parseDouble(text));
 		}
 	}
 

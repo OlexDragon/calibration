@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import irt.power_meter.data.EPM_441A;
 import irt.prologix.communication.PrologixWorker;
+import irt.prologix.communication.PrologixWorkerTest;
 import irt.prologix.data.PrologixGpibUsbController.DeviceType;
 import irt.serial_protocol.ComPort;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
@@ -16,7 +17,7 @@ public class PowerMeterWorlerTest {
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
-	private static final String COM_PORT_NAME = "COM7";
+	private static final String COM_PORT_NAME = PrologixWorkerTest.COM_PORT_NAME;
 
 	private EPM_441A powerMeter = new EPM_441A();
 
@@ -24,7 +25,7 @@ public class PowerMeterWorlerTest {
 	public void constuctorTest() {
 		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
-			new PowerMeterWorler(prologixWorker, powerMeter);
+			new PowerMeterWorker(prologixWorker, powerMeter);
 
 			assertEquals(FalseOrTrue.FALSE, 	prologixWorker.getSaveConfig()	);
 			assertEquals(DeviceType.CONTROLLER, prologixWorker.getMode()		);
@@ -40,7 +41,7 @@ public class PowerMeterWorlerTest {
 	public void measureTest() {
 		try(ComPort comPort = new ComPort(COM_PORT_NAME)){
 			PrologixWorker prologixWorker = new PrologixWorker(comPort);
-			PowerMeterWorler powerMeterWorler = new PowerMeterWorler(prologixWorker, powerMeter);
+			PowerMeterWorker powerMeterWorler = new PowerMeterWorker(prologixWorker, powerMeter);
 
 			assertNotNull(powerMeterWorler.measure());
 

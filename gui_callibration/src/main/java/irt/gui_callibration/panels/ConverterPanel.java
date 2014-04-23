@@ -2,8 +2,11 @@ package irt.gui_callibration.panels;
 
 import irt.converter.groups.DeviceInformationGroup;
 import irt.converter.groups.Group.UnitType;
+import irt.gui_callibration.CallibrationGui;
 import irt.gui_callibration.controller.Controller;
+import irt.prologix.communication.PrologixWorker;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
+import irt.serial_protocol.data.value.ValueFrequency;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -11,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -39,8 +43,10 @@ public class ConverterPanel extends JPanel {
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
-	private final ButtonGroup buttonGroup = new ButtonGroup();
+	protected static final String SERIAL_PORT = "serialPort";
+	protected static final Preferences PREFS = CallibrationGui.PREFS;
 
+	private final ButtonGroup buttonGroup = new ButtonGroup();
 
 	private JLabel lblSerialNumber;
 	private JLabel lblUnitName;
@@ -59,7 +65,29 @@ public class ConverterPanel extends JPanel {
 
 	public ConverterPanel(final Controller controller) {
 		addAncestorListener(new AncestorListener() {
+			private String[] portNames;
+
 			public void ancestorAdded(AncestorEvent event) {
+
+				String[] portNames = SerialPortList.getPortNames();
+				if (portNames != null && (this.portNames == null || portNames.length != this.portNames.length)) {
+
+					DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(portNames);
+					defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
+					PrologixWorker prologixWorker = controller.getPrologixWorker();
+
+					if (prologixWorker != null)
+						defaultComboBoxModel.removeElement(prologixWorker.getComPort().getPortName());
+
+					comboBox.setModel(defaultComboBoxModel);
+					comboBox.setSelectedItem(PREFS.get(SERIAL_PORT, "COM1"));
+					this.portNames = portNames;
+
+				}if(portNames == null && this.portNames!=null){
+					comboBox.setModel(new DefaultComboBoxModel<String>());
+					this.portNames = null;
+				}
+
 				fillInfo(controller);
 			}
 			public void ancestorMoved(AncestorEvent event) {
@@ -68,7 +96,7 @@ public class ConverterPanel extends JPanel {
 			}
 		});
 		setName("Converter");
-		
+
 		lblSerialNumber 		= new JLabel();
 		lblUnitName 			= new JLabel();
 		lblPartNumber 			= new JLabel();
@@ -87,9 +115,7 @@ public class ConverterPanel extends JPanel {
 			}
 		});
 
-		DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(SerialPortList.getPortNames());
-		defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
-		comboBox = new JComboBox<>(defaultComboBoxModel);
+		comboBox = new JComboBox<>();
 		comboBox.addItemListener(new ItemListener() {
 			public void itemStateChanged(final ItemEvent e) {
 
@@ -102,7 +128,8 @@ public class ConverterPanel extends JPanel {
 							boolean comPortIsSelected = comboBox.getSelectedIndex() != 0;
 							String portName = (String) comboBox.getSelectedItem();
 
-							controller.setConverterComPort(comPortIsSelected ? portName : null);
+							if(controller.setConverterComPort(comPortIsSelected ? portName : null))
+								PREFS.put(SERIAL_PORT, portName);
 
 							rdbtnConverter.setEnabled(comPortIsSelected);
 							if (rdbtnConverter.isSelected())
@@ -123,7 +150,6 @@ public class ConverterPanel extends JPanel {
 					}.execute();
 			}
 		});
-		comboBox.setSelectedIndex(0);
 		
 		JPanel panel = new JPanel();
 		panel.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
@@ -214,6 +240,19 @@ public class ConverterPanel extends JPanel {
 		});
 
 		txtFrequency = new JTextField();
+		txtFrequency.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new SwingWorker<Void, Void>() {
+
+					@Override
+					protected Void doInBackground() throws Exception {
+						ValueFrequency freqVAlue = controller.setConverterFrequency(txtFrequency.getText());
+						txtFrequency.setText(freqVAlue!=null ? freqVAlue.toString() : "Error");
+						return null;
+					}
+				}.execute();
+			}
+		});
 		txtFrequency.setColumns(10);
 		
 		GroupLayout gl_panel = new GroupLayout(panel);

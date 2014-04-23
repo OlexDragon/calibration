@@ -9,13 +9,8 @@ import irt.serial_protocol.data.packet.PacketHeader.Group;
 import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
-
 
 public class DeviceDebugGroup extends irt.converter.groups.Group {
-
-	private final Logger logger = (Logger) LogManager.getLogger();
 
 	public enum Params implements Parameter{
 		INFO			(Packet.IRT_SLCP_PARAMETER_DEVICE_DEBUG_INFO			),
@@ -37,16 +32,22 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		}
 	}
 
-	public enum ADC{
+	public interface ADCInterface{
+		public Params getParameter();
+		public PacketId getPacketId();
+		public RegisterValue getRegisterValue();
+	}
 
-		INPUT_POWER(new RegisterValue(10, 0, null),	 PacketId.ADC_FCM_INPUT_POWER),
-		OUTPUT_POWER(new RegisterValue(10, 1, null), PacketId.ADC_FCM_OUTPUT_POWER);
+	public enum ConverterADC implements ADCInterface{
+
+		INPUT_POWER(new RegisterValue(10, 0, null),	 PacketId.DEVICE_DEBAG_INPUT_POWER),
+		OUTPUT_POWER(new RegisterValue(10, 1, null), PacketId.DEVICE_DEBUG_OUTPUT_POWER);
 
 		private RegisterValue registerValue;
 		private PacketId packetId;
 
 
-		private ADC(RegisterValue registerValue, PacketId packetId){
+		private ConverterADC(RegisterValue registerValue, PacketId packetId){
 			this.registerValue = registerValue;
 			this.packetId = packetId;
 		}
@@ -73,38 +74,54 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		return Group.DEVICE_DEBAG;
 	}
 
-	public RegisterValue getADCRegister(ComPort comPort, ADC value) {
-		logger.entry(comPort, value);
+	public RegisterValue getADCRegister(ComPort comPort, ADCInterface adc) {
+		logger.entry(comPort, adc);
 
-		if(comPort!=null && comPort.isOpened()){
-
-			PacketHeader packetHeader = new PacketHeader(Type.REQUEST, getGroup(), value.getPacketId());
-			Payload payload = new Payload(value.getParameter().getId(), Packet.toBytes(value.getRegisterValue()));
-			Packet p = new Packet(packetHeader, payload);
-
-			setPacket(comPort.send(p));
-
-		}
+		if(comPort!=null && comPort.isOpened())
+			setPacket(comPort.send(createPacket(adc)));
 
 		return logger.exit(getRegisterValue());
 	}
 
-	public RegisterValue getADCRegister(ComPort comPort, ADC value, int times) {
-		logger.entry(comPort, value, times);
+	public Packet createPacket(ADCInterface adc) {
+		PacketHeader packetHeader = new PacketHeader(Type.REQUEST, getGroup(), adc.getPacketId());
+		Payload payload = new Payload(adc.getParameter().getId(), Packet.toBytes(adc.getRegisterValue()));
+		Packet p = new Packet(packetHeader, payload);
+		return p;
+	}
+
+	public RegisterValue getADCRegister(ComPort comPort, ADCInterface adc, int times) {
+		logger.entry(comPort, adc, times);
 		RegisterValue adcRegister = null;
 		long sum = 0;
 
 		for(int i=0; i<times; i++){
-			try { Thread.sleep(1000); } catch (InterruptedException e) { logger.catching(e); }
-			adcRegister = getADCRegister(comPort, value);
+			try { Thread.sleep(adc instanceof ConverterADC ? 1100 : 110); } catch (InterruptedException e) { logger.catching(e); }
+			adcRegister = getADCRegister(comPort, adc);
 			sum += adcRegister.getValue().getValue();
 			logger.debug("adcRegister={}, sum={}",adcRegister, sum);
 		}
 
-		logger.trace("sum = {}", sum);
+		logger.debug("sum = {}", sum);
 
 		adcRegister.getValue().setValue(sum/times);
 
 		return logger.exit(adcRegister);
+	}
+
+	public RegisterValue getInputPower(ComPort comPort) {
+		return getADCRegister(comPort, ConverterADC.INPUT_POWER);
+	}
+
+	public RegisterValue getInputPower(ComPort comPort, int times) {
+		return getADCRegister(comPort, ConverterADC.INPUT_POWER, times);
+	}
+
+	public RegisterValue getOutputPower(ComPort comPort, int times) {
+		return getADCRegister(comPort, ConverterADC.OUTPUT_POWER, times);
+	}
+
+	public RegisterValue getOutputPower(ComPort comPort) {
+		return getADCRegister(comPort, ConverterADC.OUTPUT_POWER);
 	}
 }

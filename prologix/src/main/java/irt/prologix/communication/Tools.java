@@ -19,7 +19,7 @@ public abstract class Tools {
 		FREQUENCY	("FREQ:CW"		),
 		RF_ON		("OUTP:STAT"	),
 		POWER_REF	("POW:REF:STAT"	),
-		MEASURE		("*cls;meas"	);
+		MEASURE		("*CLS;MEAS"	);
 
 		private String command;
 		private Object value;

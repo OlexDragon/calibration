@@ -14,7 +14,8 @@ public class DeviceInformationTest {
 
 	@Test
 	public void test() {
-		try(ComPort comPort = new ComPort("COM6")){
+		logger.error("Test");
+		try(ComPort comPort = new ComPort(ConfigurationTest.COM_PORT)){
 
 			DeviceInformationGroup deviceInformation = new DeviceInformationGroup();
 			deviceInformation.getAll(comPort);
