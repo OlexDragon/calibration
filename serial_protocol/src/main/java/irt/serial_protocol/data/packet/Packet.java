@@ -461,8 +461,11 @@ public class Packet {
 			else if(value instanceof Long)
 				bytes = longToBytes((Long)value);
 			else if(value instanceof RegisterValue) {
-				RegisterValue v = (RegisterValue)value;
-				bytes = concat(intToBytes(v.getIndex()), intToBytes(v.getAddr()));
+				RegisterValue rv = (RegisterValue)value;
+				bytes = concat(intToBytes(rv.getIndex()), intToBytes(rv.getAddr()));
+				Value v = rv.getValue();
+				if(v!=null)
+					bytes = concat( bytes, intToBytes((int) v.getValue()));
 			}else if(value instanceof Value)
 				bytes = longToBytes(((Value)value).getValue());
 		}

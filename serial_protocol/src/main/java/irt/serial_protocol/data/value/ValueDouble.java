@@ -22,6 +22,11 @@ public class ValueDouble extends Value {
 		setValue(value);
 	}
 
+	public ValueDouble(String value, String minValue, String maxValue, int precision){
+		super(value, minValue, maxValue, precision);
+		this.precision = precision;
+	}
+
 	public ValueDouble(ValueDouble valueDouble) {
 		super(valueDouble);
 		precision = valueDouble.getPrecision();
