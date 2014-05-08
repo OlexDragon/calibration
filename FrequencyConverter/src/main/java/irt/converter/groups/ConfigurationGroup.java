@@ -23,7 +23,7 @@ public class ConfigurationGroup extends irt.converter.groups.Group{
 		FREQUENCY_RANGE		(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_FREQUENCY_RANGE),
 		GAIN_RANGE			(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_GAIN_RANGE		),
 		ATTENUATION_RANGE	(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_ATTENUATION_RANGE),
-		MUTE		(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_MUTE_CONTROL	),
+		MUTE				(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_MUTE_CONTROL	),
 		BUC_ENABLE			(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_BUC_ENABLE		),
 		FLAGS				(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_FLAGS			),
 		GAIN_OFFSET			(Packet.IRT_SLCP_PARAMETER_CONFIGURATION_FCM_GAIN_OFFSET	),
@@ -63,14 +63,14 @@ public class ConfigurationGroup extends irt.converter.groups.Group{
 		return getUnitValue(Params.MUTE);
 	}
 
-	public FalseOrTrue getMute(ComPort comPort) {
-		FalseOrTrue falseOrTrue = null;
+	public MuteStatus getMute(ComPort comPort) {
+		MuteStatus muteStatus = null;
 
 		UnitValue unitValue = setUnitValue(comPort, Params.MUTE, PacketId.CONFIGURATION_MUTE,  null);
 		if(unitValue!=null)
-			falseOrTrue = FalseOrTrue.values()[unitValue.getValue()];
+			muteStatus = MuteStatus.values()[unitValue.getValue()];
 
-		return falseOrTrue;
+		return muteStatus;
 	}
 
 	public UnitValue setGain(ComPort comPort, short value){

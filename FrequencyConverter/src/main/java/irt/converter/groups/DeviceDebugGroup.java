@@ -8,6 +8,7 @@ import irt.serial_protocol.data.packet.PacketHeader;
 import irt.serial_protocol.data.packet.PacketHeader.Group;
 import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
+import irt.serial_protocol.data.value.Value;
 
 
 public class DeviceDebugGroup extends irt.converter.groups.Group {
@@ -36,12 +37,17 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		public Params getParameter();
 		public PacketId getPacketId();
 		public RegisterValue getRegisterValue();
+		public ADCInterface setValue(Value value);
 	}
 
 	public enum ConverterADC implements ADCInterface{
 
-		INPUT_POWER(new RegisterValue(10, 0, null),	 PacketId.DEVICE_DEBAG_INPUT_POWER),
-		OUTPUT_POWER(new RegisterValue(10, 1, null), PacketId.DEVICE_DEBUG_OUTPUT_POWER);
+		DAC1		(new RegisterValue( 1,	0, null), 	PacketId.DEVICE_DEBAG_CONVERTER_DAC1),
+		DAC2		(new RegisterValue( 2,	0, null), 	PacketId.DEVICE_DEBAG_CONVERTER_DAC2),
+		DAC3		(new RegisterValue( 3,	0, null), 	PacketId.DEVICE_DEBAG_CONVERTER_DAC3),
+		DAC4		(new RegisterValue( 4,	0, null), 	PacketId.DEVICE_DEBAG_CONVERTER_DAC4),
+		INPUT_POWER	(new RegisterValue(10,	0, null),	PacketId.DEVICE_DEBAG_INPUT_POWER),
+		OUTPUT_POWER(new RegisterValue(10,	0, null),	PacketId.DEVICE_DEBAG_INPUT_POWER);
 
 		private RegisterValue registerValue;
 		private PacketId packetId;
@@ -56,7 +62,9 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		}
 
 		public RegisterValue getRegisterValue() {
-			return registerValue;
+			RegisterValue rv = new RegisterValue(registerValue);
+			registerValue.setValue(null);
+			return rv;
 		}
 
 		public Params getParameter(){
@@ -66,6 +74,11 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		@Override
 		public String toString() {
 			return registerValue+"; packetId="+packetId;
+		}
+		@Override
+		public ADCInterface setValue(Value value) {
+			registerValue.setValue(value);
+			return this;
 		}
 	}
 
@@ -84,8 +97,11 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 	}
 
 	public Packet createPacket(ADCInterface adc) {
-		PacketHeader packetHeader = new PacketHeader(Type.REQUEST, getGroup(), adc.getPacketId());
-		Payload payload = new Payload(adc.getParameter().getId(), Packet.toBytes(adc.getRegisterValue()));
+
+		RegisterValue registerValue = adc.getRegisterValue();
+
+		PacketHeader packetHeader = new PacketHeader(registerValue.getValue()==null ? Type.REQUEST : Type.COMMAND, getGroup(), adc.getPacketId());
+		Payload payload = new Payload(adc.getParameter().getId(), Packet.toBytes(registerValue));
 		Packet p = new Packet(packetHeader, payload);
 		return p;
 	}
@@ -117,11 +133,11 @@ public class DeviceDebugGroup extends irt.converter.groups.Group {
 		return getADCRegister(comPort, ConverterADC.INPUT_POWER, times);
 	}
 
-	public RegisterValue getOutputPower(ComPort comPort, int times) {
-		return getADCRegister(comPort, ConverterADC.OUTPUT_POWER, times);
-	}
-
 	public RegisterValue getOutputPower(ComPort comPort) {
 		return getADCRegister(comPort, ConverterADC.OUTPUT_POWER);
+	}
+
+	public RegisterValue getOutputPower(ComPort comPort, int times) {
+		return getADCRegister(comPort, ConverterADC.OUTPUT_POWER, times);
 	}
 }
