@@ -1,17 +1,14 @@
 package irt.converter.groups;
 
+import static org.junit.Assert.assertEquals;
 import irt.converter.data.UnitValue;
 import irt.converter.groups.ConfigurationGroup.Params;
 import irt.converter.groups.Group.MuteStatus;
 import irt.serial_protocol.ComPort;
 import irt.serial_protocol.data.PacketWork.PacketId;
-import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 
 public class ConfigurationGroupTest {
@@ -57,17 +54,17 @@ public class ConfigurationGroupTest {
 	@Test
 	public void setGetMute() throws Exception {
 		logger.entry();
-		FalseOrTrue unitValue1;
+		MuteStatus unitValue1;
 		MuteStatus unitValue2;
-		FalseOrTrue unitValue3;
+		MuteStatus unitValue3;
 		MuteStatus unitValue4;
 
 		try(ComPort comPort = new ComPort(COM_PORT)){
 
 			ConfigurationGroup configuration = new ConfigurationGroup();
-			unitValue1 = configuration.setMute(comPort, FalseOrTrue.TRUE);
+			unitValue1 = configuration.setMute(comPort, MuteStatus.MUTED);
 			unitValue2 = configuration.getMute(comPort);
-			unitValue3 = configuration.setMute(comPort, FalseOrTrue.FALSE);
+			unitValue3 = configuration.setMute(comPort, MuteStatus.UNMUTED);
 			unitValue4 = configuration.getMute(comPort);
 		}
 
