@@ -9,7 +9,6 @@ import irt.serial_protocol.data.packet.PacketHeader.Group;
 import irt.serial_protocol.data.packet.PacketHeader.Type;
 import irt.serial_protocol.data.packet.Payload;
 import irt.serial_protocol.data.value.ValueFrequency;
-import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 public class ConfigurationGroup extends irt.converter.groups.Group{
 
@@ -81,14 +80,14 @@ public class ConfigurationGroup extends irt.converter.groups.Group{
 		return setUnitValue(comPort, Params.ATTENUATION, PacketId.CONFIGURATION_ATTENUATION,  value);
 	}
 
-	public FalseOrTrue setMute(ComPort comPort, FalseOrTrue falseOrTrue){
-		logger.entry(comPort, falseOrTrue);
+	public MuteStatus setMute(ComPort comPort, MuteStatus muteStatus){
+		logger.entry(comPort, muteStatus);
 
-		UnitValue setUnitValue = setUnitValue(comPort, Params.MUTE, PacketId.CONFIGURATION_MUTE,  (byte)falseOrTrue.ordinal());
+		UnitValue setUnitValue = setUnitValue(comPort, Params.MUTE, PacketId.CONFIGURATION_MUTE,  (byte)muteStatus.ordinal());
 
-		FalseOrTrue mute = null;
+		MuteStatus mute = null;
 		if(setUnitValue!=null)
-			mute = FalseOrTrue.values()[setUnitValue.getValue()];
+			mute = MuteStatus.values()[setUnitValue.getValue()];
 
 		return mute;
 	}

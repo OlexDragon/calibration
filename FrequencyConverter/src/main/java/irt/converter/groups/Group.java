@@ -214,7 +214,7 @@ public abstract class Group {
 	}
 
 	public void setAddress(Byte address) {
-		this.address = address;
+		Group.address = address;
 	}
 
 	private Packet createPacket(Parameter parameter, PacketId packetId) {

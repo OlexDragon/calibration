@@ -45,7 +45,7 @@ public class ConverterWorker {
 	}
 
 	public boolean setMute(ComPort comPort, boolean mute){
-		return configurationGroup.setMute(comPort, mute ? FalseOrTrue.TRUE : FalseOrTrue.FALSE)==FalseOrTrue.TRUE;
+		return configurationGroup.setMute(comPort, mute ? MuteStatus.MUTED : MuteStatus.UNMUTED)==MuteStatus.MUTED;
 	}
 
 	public UnitValue getAttenuation(ComPort comPort){
