@@ -43,7 +43,7 @@ public class ValueFrequency extends Value {
 	}
 
 	@Override
-	public long parseLong(String text) {
+	public long parse(String text) {
 		logger.entry(text);
 
 		int multiplier = 1;
@@ -101,7 +101,7 @@ public class ValueFrequency extends Value {
 		}
 
 		NumberFormat numberFormat = getInstance();
-		return logger.exit((isDoToStringFofrat() ? numberFormat.format(value) : value)+getPrefix());
+		return logger.exit((isDoToStringFofmat() ? numberFormat.format(value) : value)+getPrefix());
 	}
 
 	@Override

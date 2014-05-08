@@ -14,8 +14,9 @@ public class Value extends Observable{
 	public enum Status{
 				IN_RANGE,
 				UNDER_RANGE,
-				MORE_THEN_RANGE,
-				RANGE_SET
+				OVER_RANGE,
+				RANGE_SET,
+				NUMBER_FORMAT_EXEPTION
 	}
 	private int type = 0;
 
@@ -29,6 +30,8 @@ public class Value extends Observable{
 	private boolean doStringFormat;
 
 	private boolean error;
+
+	private Status status;
 
 	protected Value(){}
 
@@ -49,8 +52,8 @@ public class Value extends Observable{
 	public Value(String value, String minValue, String maxValue, int precision) {
 		logger.entry(value, minValue, maxValue, precision);
 		setFactor(precision);
-		setMinMax(parseLong(minValue)*factor, parseLong(maxValue)*factor);
-		setValue(value!=null ? parseLong(value) : 0);
+		setMinMax(parse(minValue), parse(maxValue));
+		setValue(value!=null ? parse(value) : 0);
 		setPrefix();
 	}
 
@@ -83,7 +86,7 @@ public class Value extends Observable{
 	}
 
 	public void setMinMax(String minValue, String maxValue) {
-		setMinMax(parseLong(minValue), parseLong(maxValue));
+		setMinMax(parse(minValue), parse(maxValue));
 	}
 
 	public long getMinValue() {
@@ -99,7 +102,7 @@ public class Value extends Observable{
 	}
 
 	protected void setMinValue(String minValue) {
-		long min = parseLong(minValue);
+		long min = parse(minValue);
 		setMinValue(min);
 	}
 
@@ -116,7 +119,7 @@ public class Value extends Observable{
 	}
 
 	protected void setMaxValue(String maxValue) {
-		long max = parseLong(maxValue);
+		long max = parse(maxValue);
 		setMaxValue(max);
 	}
 
@@ -124,28 +127,30 @@ public class Value extends Observable{
 		logger.entry(value, minValue, maxValue);
 
 		if (this.value != value || value<minValue || value>maxValue) {
-			oldValue = this.value;
 			setChanged();
 
 			if (value > maxValue) {
+				oldValue = value;
 				this.value = maxValue;
 				error = true;
-				notifyObservers(Status.MORE_THEN_RANGE);
+				status = Status.OVER_RANGE;
 			} else if (value < minValue) {
+				oldValue = value;
 				error = true;
 				this.value = minValue;
-				notifyObservers(Status.UNDER_RANGE);
+				status = Status.UNDER_RANGE;
 			} else {
+				oldValue = this.value;
 				error = false;
 				this.value = value;
-				notifyObservers(Status.IN_RANGE);
+				status = Status.IN_RANGE;
 			}
 		}
 		logger.exit(this.value);
 	}
 
 	public Value setValue(String text) {
-		setValue(parseLong(text));
+		setValue(parse(text));
 		return this;
 	}
 
@@ -172,7 +177,7 @@ public class Value extends Observable{
 		setValue(relValue + minValue);
 	}
 
-	public long parseLong(String text) {
+	public long parse(String text) {
 		long value = 0;
 		if(text==null || text.trim().isEmpty()){
 			error = true;
@@ -185,6 +190,7 @@ public class Value extends Observable{
 					error = false;
 				} catch (NumberFormatException e) {
 					error = true;
+					status = Status.NUMBER_FORMAT_EXEPTION;
 					logger.catching(e);
 				}
 			else
@@ -214,8 +220,9 @@ public class Value extends Observable{
 		return prefix;
 	}
 
-	public void setPrefix(String prefix) {
+	public Value setPrefix(String prefix) {
 		this.prefix = prefix!= null ? prefix : "";
+		return this;
 	}
 
 	public void setPrefix() {
@@ -252,8 +259,9 @@ public class Value extends Observable{
 		return oldValue;
 	}
 
-	public void add(long value) {
+	public Value add(long value) {
 		setValue(value+this.value);
+		return this;
 	}
 
 	public void subtract(long value) {
@@ -273,7 +281,7 @@ public class Value extends Observable{
 		return error;
 	}
 
-	public boolean isDoToStringFofrat() {
+	public boolean isDoToStringFofmat() {
 		return doStringFormat;
 	}
 
@@ -300,5 +308,9 @@ public class Value extends Observable{
 	@Override
 	public String toString() {
 		return toString(value);
+	}
+
+	public Status getStatus() {
+		return status;
 	}
 }
