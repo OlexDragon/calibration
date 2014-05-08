@@ -3,10 +3,18 @@ package irt.converter;
 import irt.converter.data.UnitValue;
 import irt.converter.groups.ConfigurationGroup;
 import irt.converter.groups.DeviceDebugGroup;
+import irt.converter.groups.DeviceDebugGroup.Params;
 import irt.converter.groups.DeviceInformationGroup;
+import irt.converter.groups.Group.MuteStatus;
 import irt.converter.groups.MeasurementGroup;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.PacketWork.PacketId;
 import irt.serial_protocol.data.RegisterValue;
+import irt.serial_protocol.data.packet.Packet;
+import irt.serial_protocol.data.packet.PacketHeader;
+import irt.serial_protocol.data.packet.PacketHeader.Group;
+import irt.serial_protocol.data.packet.PacketHeader.Type;
+import irt.serial_protocol.data.packet.Payload;
 import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 public class ConverterWorker {
@@ -33,7 +41,7 @@ public class ConverterWorker {
 	}
 
 	public boolean isMute(ComPort comPort){
-		return configurationGroup.getMute(comPort)==FalseOrTrue.TRUE;
+		return configurationGroup.getMute(comPort)==MuteStatus.MUTED;
 	}
 
 	public boolean setMute(ComPort comPort, boolean mute){
@@ -71,5 +79,22 @@ public class ConverterWorker {
 
 	public MeasurementGroup getMonitorConverterGroup() {
 		return monitorConverterGroup;
+	}
+
+	public void setCalibrationMode(ComPort comPort, FalseOrTrue falseOrTrue) {
+		deviceDebugGroup.setPacket(
+				new Packet(
+						new PacketHeader(
+								Type.COMMAND,
+								Group.DEVICE_DEBAG,
+								PacketId.DEVICE_DEBAG_CALIBRATION_MODE
+						),
+						new Payload(
+								Params.CALIBRATION_MODE.getId(),
+								Packet.toBytes(falseOrTrue.ordinal())
+						)
+				)
+		);
+		comPort.send(deviceDebugGroup.getPacket());
 	}
 }

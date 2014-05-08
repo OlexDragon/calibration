@@ -43,10 +43,16 @@ public abstract class Group {
 		CONVERTER,
 		BUC
 	}
+
+	public enum MuteStatus{
+		UNMUTED,
+		MUTED
+	}
+
 //***************************************************************************************************
 	private Packet packet;
 	private UnitType unitType;
-	private Byte address;
+	private static Byte address;
 
 	public abstract irt.serial_protocol.data.packet.PacketHeader.Group getGroup();
 
