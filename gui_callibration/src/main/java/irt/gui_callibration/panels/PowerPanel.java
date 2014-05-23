@@ -30,10 +30,10 @@ import javax.swing.event.AncestorListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 
-public class CallibrationPanel extends JPanel {
-	private static final String START_CALLIBRATION = "Start Callibration";
-
+public class PowerPanel extends JPanel {
 	private static final long serialVersionUID = -8155863148837162482L;
+
+	private static final String START_CALLIBRATION = "Start Callibration";
 
 	private final Logger logger = (Logger) LogManager.getLogger();
 
@@ -42,7 +42,7 @@ public class CallibrationPanel extends JPanel {
 	private JLabel lblStep;
 	private JTextField txtOneStep;
 	private JLabel lblSgFreq;
-	private JTextField txtSqFreq;
+	private JTextField txtSgFreq;
 	private JTextField txtSteps;
 
 	private OutputPowerPanel outputPowerPanel;
@@ -52,7 +52,7 @@ public class CallibrationPanel extends JPanel {
 	private JCheckBox chckbxOutputPower;
 	private JComboBox<OutoutPowerDetectorSource> comboBox;
 
-	public CallibrationPanel(final Controller controller) {
+	public PowerPanel(final Controller controller) {
 		setName("Power");
 
 		addAncestorListener(new AncestorListener() {
@@ -63,14 +63,14 @@ public class CallibrationPanel extends JPanel {
 					protected Void doInBackground() throws Exception {
 						boolean readyForCalibration = controller.isSignalGenerator();
 						txtSgPower.setEnabled(readyForCalibration);
-						txtSqFreq.setEnabled(readyForCalibration);
+						txtSgFreq.setEnabled(readyForCalibration);
 						chckbxInputPower.setEnabled(readyForCalibration && controller.getUnitType()==UnitType.CONVERTER);
 						chckbxOutputPower.setEnabled(controller.isPowerMeter());
 						comboBox.setVisible(controller.getUnitType()==UnitType.BUC);
 
 						if(readyForCalibration){
 							txtSgPower.setText(controller.getSgPower());
-							txtSqFreq.setText(controller.getSgFrequency());
+							txtSgFreq.setText(controller.getSgFrequency());
 						}
 
 						inputPowerPanel.setVisible(controller.isInputPower());
@@ -91,8 +91,8 @@ public class CallibrationPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 
 				if (button.getText().equals(START_CALLIBRATION)) {
-					txtSqFreq.setText(controller.setFrequency(txtSqFreq.getText()));
-					txtSgPower.setText(controller.setSignalGeneratorStartPower(txtSgPower.getText()));
+					txtSgFreq.setText(controller.setFrequency(txtSgFreq.getText()));
+					txtSgPower.setText(controller.setSignalGeneratorPower(txtSgPower.getText()));
 					controller.setSteps(txtSteps.getText(), txtOneStep.getText());
 					final Thread callibrationThread = controller.startPowerCallibration();
 					button.setText("Stop");
@@ -124,7 +124,7 @@ public class CallibrationPanel extends JPanel {
 					@Override
 					protected Void doInBackground() throws Exception {
 						try{
-							txtSgPower.setText(controller.setSignalGeneratorStartPower(txtSgPower.getText()));
+							txtSgPower.setText(controller.setSignalGeneratorPower(txtSgPower.getText()));
 						}catch(Exception ex){
 							JOptionPane.showMessageDialog(null, ex.getLocalizedMessage());
 							logger.catching(ex);
@@ -146,13 +146,13 @@ public class CallibrationPanel extends JPanel {
 		lblSgFreq = new JLabel("SG Freq:");
 		lblSgFreq.setHorizontalAlignment(SwingConstants.RIGHT);
 		
-		txtSqFreq = new JTextField();
-		txtSqFreq.addActionListener(new ActionListener() {
+		txtSgFreq = new JTextField();
+		txtSgFreq.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				txtSqFreq.setText(controller.setFrequency(txtSqFreq.getText()));
+				ToolsPanel.setSgFrequency(txtSgFreq, controller);
 			}
 		});
-		txtSqFreq.setColumns(10);
+		txtSgFreq.setColumns(10);
 		
 		JLabel lblSteps = new JLabel("Steps:");
 		lblSteps.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -226,7 +226,7 @@ public class CallibrationPanel extends JPanel {
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addGroup(groupLayout.createParallelGroup(Alignment.LEADING, false)
 								.addGroup(groupLayout.createSequentialGroup()
-									.addComponent(txtSqFreq, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+									.addComponent(txtSgFreq, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 									.addGap(18)
 									.addComponent(lblStep))
 								.addGroup(groupLayout.createSequentialGroup()
@@ -256,7 +256,7 @@ public class CallibrationPanel extends JPanel {
 					.addContainerGap()
 					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
 						.addComponent(lblSgFreq)
-						.addComponent(txtSqFreq, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txtSgFreq, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(lblStep)
 						.addComponent(txtOneStep, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 						.addComponent(button))

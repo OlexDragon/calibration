@@ -1,11 +1,11 @@
 package irt.gui_callibration.panels;
 
 import irt.converter.groups.DeviceInformationGroup;
+import irt.converter.groups.Group.MuteStatus;
 import irt.converter.groups.Group.UnitType;
 import irt.gui_callibration.CallibrationGui;
 import irt.gui_callibration.controller.Controller;
 import irt.prologix.communication.PrologixWorker;
-import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 import irt.serial_protocol.data.value.ValueFrequency;
 
 import java.awt.Color;
@@ -14,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
 import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
@@ -46,6 +47,9 @@ public class ConverterPanel extends JPanel {
 	protected static final String SERIAL_PORT = "serialPort";
 	protected static final Preferences PREFS = CallibrationGui.PREFS;
 
+	private static String[] portNames;
+	private static String usedPortName;
+
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 
 	private JLabel lblSerialNumber;
@@ -65,31 +69,15 @@ public class ConverterPanel extends JPanel {
 
 	public ConverterPanel(final Controller controller) {
 		addAncestorListener(new AncestorListener() {
-			private String[] portNames;
 
 			public void ancestorAdded(AncestorEvent event) {
 
-				String[] portNames = SerialPortList.getPortNames();
-				if (portNames != null && (this.portNames == null || portNames.length != this.portNames.length)) {
+				PrologixWorker prologixWorker = controller.getPrologixWorker();
 
-					DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(portNames);
-					defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
-					PrologixWorker prologixWorker = controller.getPrologixWorker();
-
-					if (prologixWorker != null)
-						defaultComboBoxModel.removeElement(prologixWorker.getComPort().getPortName());
-
-					comboBox.setModel(defaultComboBoxModel);
-					comboBox.setSelectedItem(PREFS.get(SERIAL_PORT, "COM1"));
-					this.portNames = portNames;
-
-				}if(portNames == null && this.portNames!=null){
-					comboBox.setModel(new DefaultComboBoxModel<String>());
-					this.portNames = null;
-				}
-
+				fillComboBox(comboBox, PREFS.get(SERIAL_PORT, "COM1"), prologixWorker != null ? prologixWorker.getComPort().getPortName() : null);
 				fillInfo(controller);
 			}
+
 			public void ancestorMoved(AncestorEvent event) {
 			}
 			public void ancestorRemoved(AncestorEvent event) {
@@ -222,39 +210,18 @@ public class ConverterPanel extends JPanel {
 		btnMute = new JButton("Mute");
 		btnMute.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				new SwingWorker<Void, Void>(){
-
-					@Override
-					protected Void doInBackground() throws Exception {
-						boolean m = btnMute.getText().equals("Mute");
-
-						if(controller.setConverterMute(m ? FalseOrTrue.TRUE :FalseOrTrue.FALSE)==FalseOrTrue.TRUE)
-							btnMute.setText("Unmute");
-						else
-							btnMute.setText("Mute");
-
-						return null;
-					}
-				}.execute();
+				muteButtonAction(btnMute, controller);
 			}
 		});
 
 		txtFrequency = new JTextField();
 		txtFrequency.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				new SwingWorker<Void, Void>() {
-
-					@Override
-					protected Void doInBackground() throws Exception {
-						ValueFrequency freqVAlue = controller.setConverterFrequency(txtFrequency.getText());
-						txtFrequency.setText(freqVAlue!=null ? freqVAlue.toString() : "Error");
-						return null;
-					}
-				}.execute();
+				setFrequency(txtFrequency, controller);
 			}
 		});
 		txtFrequency.setColumns(10);
-		
+	
 		GroupLayout gl_panel = new GroupLayout(panel);
 		gl_panel.setHorizontalGroup(
 			gl_panel.createParallelGroup(Alignment.LEADING)
@@ -363,6 +330,69 @@ public class ConverterPanel extends JPanel {
 				logger.exit();
 				return null;
 			}
+		}.execute();
+	}
+
+	public static void muteButtonAction(final JButton btnMute, final Controller controller) {
+		new SwingWorker<Void, Void>(){
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				boolean m = btnMute.getText().equals("Mute");
+
+				if(controller.setConverterMute(m ? MuteStatus.MUTED : MuteStatus.UNMUTED)==MuteStatus.MUTED)
+					btnMute.setText("Unmute");
+				else
+					btnMute.setText("Mute");
+
+				return null;
+			}
+		}.execute();
+	}
+
+	public static void setFrequency(final JTextField txtFrequency, final Controller controller) {
+		new SwingWorker<Void, Void>() {
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				ValueFrequency freqVAlue = controller.setConverterFrequency(txtFrequency.getText());
+				txtFrequency.setText(freqVAlue!=null ? freqVAlue.toString() : "Error");
+				return null;
+			}
+		}.execute();
+	}
+
+	public static void fillComboBox(final JComboBox<String> comboBox, final String prefsName, final String usedPortName) {
+		new SwingWorker<Void, Void>(){
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				String[] portNames = SerialPortList.getPortNames();
+				if (portNames != null && (
+											ConverterPanel.portNames == null ||
+											!Arrays.equals(portNames, ConverterPanel.portNames) ||
+											ConverterPanel.usedPortName == null ||
+											!ConverterPanel.usedPortName.equals(usedPortName))) {
+
+					ConverterPanel.portNames = portNames;
+					ConverterPanel.usedPortName = usedPortName;
+
+					DefaultComboBoxModel<String>
+					defaultComboBoxModel = new DefaultComboBoxModel<String>(portNames);
+					defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
+					defaultComboBoxModel.setSelectedItem("Select Serial Port");
+					defaultComboBoxModel.removeElement(usedPortName);
+
+					comboBox.setModel(defaultComboBoxModel);
+					comboBox.setSelectedItem(prefsName);
+
+				}if(portNames == null && ConverterPanel.portNames!=null){
+					comboBox.setModel(new DefaultComboBoxModel<String>());
+					ConverterPanel.portNames = null;
+				}
+				return null;
+			}
+	
 		}.execute();
 	}
 }

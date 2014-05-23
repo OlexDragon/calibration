@@ -1,7 +1,8 @@
 package irt.gui_callibration;
 
 import irt.gui_callibration.controller.Controller;
-import irt.gui_callibration.panels.CallibrationPanel;
+import irt.gui_callibration.panels.AttenuationPanel;
+import irt.gui_callibration.panels.PowerPanel;
 import irt.gui_callibration.panels.ConverterPanel;
 import irt.gui_callibration.panels.ToolsPanel;
 
@@ -50,6 +51,8 @@ public class CallibrationGui extends JFrame {
 	}
 
 	public CallibrationGui() {
+		super("Callibration");
+
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent arg0) {
@@ -81,8 +84,11 @@ public class CallibrationGui extends JFrame {
 		ToolsPanel toolsPanel = new ToolsPanel(controller);
 		tabbedPane.addTab(toolsPanel.getName(), toolsPanel);
 		
-		CallibrationPanel callibrationPanel = new CallibrationPanel(controller);
+		PowerPanel callibrationPanel = new PowerPanel(controller);
 		tabbedPane.addTab(callibrationPanel.getName(), callibrationPanel);
+		
+		AttenuationPanel attenuationPanel = new AttenuationPanel(this, controller);
+		tabbedPane.addTab(attenuationPanel.getName(), attenuationPanel);
 
 		List<JLabel> titles = new ArrayList<>();
 		for(int i=0; i<tabbedPane.getTabCount(); i++){
