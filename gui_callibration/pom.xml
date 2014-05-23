@@ -9,6 +9,7 @@
 
 	<modules>
 		<module>../buc</module>
+		<module>../FrequencyConverter</module>
 		<module>../signal_generator</module>
 		<module>../power_meter</module>
 		<module>../measurement</module>
@@ -25,6 +26,12 @@
 		<dependency>
 			<groupId>irt</groupId>
 			<artifactId>buc</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>irt</groupId>
+			<artifactId>frequency_converter</artifactId>
 			<version>0.0.1</version>
 		</dependency>
 		<dependency>

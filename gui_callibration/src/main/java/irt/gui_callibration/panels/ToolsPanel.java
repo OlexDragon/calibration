@@ -2,6 +2,7 @@ package irt.gui_callibration.panels;
 
 import irt.gui_callibration.controller.Controller;
 import irt.serial_protocol.ComPort;
+import irt.serial_protocol.data.ThrowException;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -11,13 +12,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.prefs.Preferences;
 
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
@@ -25,10 +27,13 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-import jssc.SerialPortList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 
 public class ToolsPanel extends JPanel {
 	private static final long serialVersionUID = 6433123493656611447L;
+
+	private final static Logger logger = (Logger) LogManager.getLogger();
 
 	protected static final String SERIAL_PORT = "toolsSerialPort";
 	protected static final Preferences PREFS = Preferences.userRoot().node("IRT Technologies inc.");
@@ -38,31 +43,17 @@ public class ToolsPanel extends JPanel {
 	private JCheckBox chckbxPowerMeter;
 	private JLabel lblSgId;
 	private JLabel lblPowerMeterId;
+	private JTextField txtSgPower;
+	private JTextField txtSgFrequency;
 
 	public ToolsPanel(final Controller controller) {
 		addAncestorListener(new AncestorListener() {
-			private String[] portNames;
 			public void ancestorAdded(AncestorEvent event) {
 
-				String[] portNames = SerialPortList.getPortNames();
-				if (portNames != null && (this.portNames == null || portNames.length != this.portNames.length)) {
-
-					DefaultComboBoxModel<String> defaultComboBoxModel = new DefaultComboBoxModel<String>(portNames);
-					defaultComboBoxModel.insertElementAt("Select Serial Port", 0);
-					ComPort comPort = controller.getConverterPort();
-
-					if (comPort != null)
-						defaultComboBoxModel.removeElement(comPort.getPortName());
-
-					comboBox.setModel(defaultComboBoxModel);
-					comboBox.setSelectedItem(PREFS.get(SERIAL_PORT, "COM1"));
-					this.portNames = portNames;
-
-				}if(portNames == null && this.portNames!=null){
-					comboBox.setModel(new DefaultComboBoxModel<String>());
-					this.portNames = null;
-				}
+				ComPort comPort = controller.getConverterPort();
+				ConverterPanel.fillComboBox(comboBox, PREFS.get(SERIAL_PORT, "COM1"), comPort != null ? comPort.getPortName() : null);
 			}
+
 			public void ancestorMoved(AncestorEvent event) {
 			}
 			public void ancestorRemoved(AncestorEvent event) {
@@ -77,6 +68,7 @@ public class ToolsPanel extends JPanel {
 				controller.setSignalGenerator(text!=null && !text.isEmpty());
 			}
 		});
+
 		lblPowerMeterId = new JLabel();
 		lblPowerMeterId.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
@@ -93,8 +85,10 @@ public class ToolsPanel extends JPanel {
 
 					@Override
 					protected Void doInBackground() throws Exception {
-						lblPowerMeterId.setText(controller.getPowerMeterId());
-						setTitleColor(controller);
+						synchronized (logger) {
+							lblPowerMeterId.setText(controller.getPowerMeterId());
+							setTitleColor(controller);
+						}
 						return null;
 					}
 
@@ -163,8 +157,24 @@ public class ToolsPanel extends JPanel {
 
 					@Override
 					protected Void doInBackground() throws Exception {
-						lblSgId.setText(controller.getSignalGeneratorId());
-						setTitleColor(controller);
+						synchronized (logger) {
+							if (chckbxSignalGenerator.isSelected()) {
+								try (ComPort comPort = controller.openToolsPort()) {
+									lblSgId.setText(Controller.getSignalGeneratorId(comPort));
+									setTitleColor(controller);
+									String text = lblSgId.getText();
+									if (text != null && !text.isEmpty()) {
+										txtSgPower.setText(Controller.getSgPower(comPort));
+										txtSgFrequency.setText(Controller.getSgFrequency(comPort));
+									}
+								}
+
+							} else {
+								lblSgId.setText("");
+								txtSgPower.setText("");
+								txtSgFrequency.setText("");
+							}
+						}
 						return null;
 					}
 					
@@ -172,32 +182,56 @@ public class ToolsPanel extends JPanel {
 			}
 		});
 		
+		txtSgPower = new JTextField();
+		txtSgPower.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				setSgPower(txtSgPower, controller);
+			}
+		});
+		txtSgPower.setColumns(10);
+		
+		txtSgFrequency = new JTextField();
+		txtSgFrequency.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				setSgFrequency(txtSgFrequency, controller);
+			}
+		});
+		txtSgFrequency.setColumns(10);
+		
 		GroupLayout gl_panel = new GroupLayout(panel);
 		gl_panel.setHorizontalGroup(
 			gl_panel.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel.createSequentialGroup()
 					.addContainerGap()
 					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
-						.addComponent(chckbxSignalGenerator)
+						.addGroup(gl_panel.createSequentialGroup()
+							.addComponent(chckbxSignalGenerator)
+							.addPreferredGap(ComponentPlacement.UNRELATED)
+							.addComponent(txtSgPower, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(txtSgFrequency, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
 						.addComponent(lblSgId)
 						.addComponent(chckbxPowerMeter)
 						.addComponent(lblPowerMeterId))
-					.addContainerGap(315, Short.MAX_VALUE))
+					.addContainerGap(129, Short.MAX_VALUE))
 		);
 		gl_panel.setVerticalGroup(
 			gl_panel.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel.createSequentialGroup()
 					.addContainerGap()
-					.addComponent(chckbxSignalGenerator)
+					.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
+						.addComponent(chckbxSignalGenerator)
+						.addComponent(txtSgPower, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txtSgFrequency, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(lblSgId)
 					.addGap(18)
 					.addComponent(chckbxPowerMeter)
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(lblPowerMeterId)
-					.addContainerGap(177, Short.MAX_VALUE))
+					.addContainerGap(124, Short.MAX_VALUE))
 		);
-		gl_panel.linkSize(SwingConstants.VERTICAL, new Component[] {chckbxSignalGenerator, chckbxPowerMeter, lblSgId, lblPowerMeterId});
+		gl_panel.linkSize(SwingConstants.VERTICAL, new Component[] {lblSgId, lblPowerMeterId, chckbxSignalGenerator, chckbxPowerMeter});
 		gl_panel.linkSize(SwingConstants.HORIZONTAL, new Component[] {chckbxSignalGenerator, chckbxPowerMeter});
 		panel.setLayout(gl_panel);
 		setLayout(groupLayout);
@@ -217,5 +251,32 @@ public class ToolsPanel extends JPanel {
 			controller.getLblTools().setBackground(Color.YELLOW);
 		else
 			controller.getLblTools().setBackground(Color.RED);
+	}
+
+	public static void setSgPower(final JTextField txtSgPower, final Controller controller) {
+		new SwingWorker<Void, Void>(){
+			@Override
+			protected Void doInBackground() throws Exception {
+				try{
+					txtSgPower.setText(controller.setSignalGeneratorPower(txtSgPower.getText()));
+				}catch(Exception ex){
+					JOptionPane.showMessageDialog(null, ex.getLocalizedMessage());
+					ThrowException.throwException(logger, ex);
+				}
+				return null;
+			}
+			
+		}.execute();
+	}
+
+	public static void setSgFrequency(final JTextField txtSgFrequency, final Controller controller) {
+		new SwingWorker<Void, Void>() {
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				txtSgFrequency.setText(controller.setFrequency(txtSgFrequency.getText()));
+				return null;
+			}
+		}.execute();
 	}
 }

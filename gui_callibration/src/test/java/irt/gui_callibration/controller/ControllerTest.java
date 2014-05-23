@@ -2,10 +2,10 @@ package irt.gui_callibration.controller;
 
 import irt.buc.BucWorker;
 import irt.buc.groups.DeviceDebugGroup.BucADC;
+import irt.converter.groups.Group.MuteStatus;
 import irt.converter.groups.Group.UnitType;
 import irt.serial_protocol.ComPort;
 import irt.serial_protocol.data.RegisterValue;
-import irt.serial_protocol.data.value.Enums.FalseOrTrue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
@@ -25,9 +25,9 @@ public class ControllerTest {
 		BucWorker bucWorker = new BucWorker((byte) 254);
 
 		try(ComPort comPort = new ComPort("COM1")){
-			controller.setMute(comPort, FalseOrTrue.TRUE);
+			controller.setMute(comPort, MuteStatus.MUTED);
 			Thread.sleep(1000);
-			controller.setMute(comPort, FalseOrTrue.FALSE);
+			controller.setMute(comPort, MuteStatus.UNMUTED);
 			for(int i=0; i<100; i++){
 				Thread.sleep(100);
 				RegisterValue outputPower = bucWorker.getDeviceDebugGroup().getADCRegister(comPort, BucADC.DEVICE_CURRENT_1);

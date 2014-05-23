@@ -7,7 +7,7 @@
   </Appenders>
 
   <Loggers>
-  	<logger name="irt.gui_callibration.controller.Controller" level="debug" />
+  	<logger name="irt.gui_callibration.controller.Controller" level="all" />
   	<logger name="irt.gui_callibration.panels.ConverterPanel" level="WARN" />
  
   	<logger name="irt.measurement.data.Table" level="WARN" />
@@ -17,12 +17,12 @@
   	<logger name="irt.prologix.communication.PrologixWorker" level="WARN" />
   	<logger name="irt.prologix.communication.Tools" level="WARN" />
  
-  	<logger name="irt.serial_protocol.ComPort" level="all" />
+  	<logger name="irt.serial_protocol.ComPort" level="WARN" />
  	<logger name="irt.serial_protocol.data.value.ValueDouble" level="WARN" />
  	<logger name="irt.serial_protocol.data.value.ValueFrequency" level="WARN" />
 
   	<logger name="irt.converter.groups.DeviceDebugGroup" level="WARN" />
-  	<logger name="irt.converter.groups.ConfigurationGroup" level="all" />
+  	<logger name="irt.converter.groups.ConfigurationGroup" level="WARN" />
  	<logger name="irt.converter.groups.DeviceInformationGroup" level="WARN" />
 
   	<logger name="irt.buc.groups.DeviceDebugGroup" level="WARN" />
