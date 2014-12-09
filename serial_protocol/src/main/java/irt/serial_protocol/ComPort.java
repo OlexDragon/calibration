@@ -26,7 +26,7 @@ import org.apache.logging.log4j.core.Logger;
 
 public class ComPort extends SerialPort implements AutoCloseable {
 
-	private final Logger logger = (Logger) LogManager.getLogger();
+	private static final Logger logger = (Logger) LogManager.getLogger();
 
 	public static final byte FLAG_SEQUENCE	= 0x7E;
 	public static final byte CONTROL_ESCAPE= 0x7D;
@@ -41,7 +41,35 @@ public class ComPort extends SerialPort implements AutoCloseable {
 	private boolean isSerialPortEven;
 	private boolean isComfirm;
 
-	public ComPort(String portName) throws SerialPortException {
+	private static List<ComPort> comPorts = new ArrayList<>();
+
+	public static ComPort getInstance(String portName) throws SerialPortException{
+		logger.entry(portName);
+
+		ComPort comPort = null;
+		portName = portName.toUpperCase();
+
+		if(portName!=null && portName.startsWith("COM")){
+			for(ComPort cp:comPorts){
+				String cpName = cp.getPortName();
+				if(cpName!=null && cpName.equals(portName)){
+					comPort = cp;
+					break;
+				}
+			}
+
+			if(comPort==null){
+				comPort = new ComPort(portName);
+				comPorts.add(comPort);
+			}
+
+			comPort.openPort();
+		}
+
+		return logger.exit(comPort);
+	}
+
+	private ComPort(String portName) throws SerialPortException {
 		super(portName);
 
 		timer = new Timer(timeout, new ActionListener() {
@@ -292,6 +320,7 @@ do{
 
 		if (isOpened() && buffer != null && buffer.length > 0) {
 
+			clear();
 			writeBytes(buffer);
 
 			if (needAnswer){
@@ -358,7 +387,6 @@ do{
 	}
 
 	public byte[] clear() throws SerialPortException {
-		logger.entry();
 		int waitTime = 20;
 		byte[] readBytes = null;
 		while(wait(1, waitTime)){
@@ -366,10 +394,10 @@ do{
 //			String readBytesStr = ToHex.bytesToHex(readBytes);
 //			Console.appendLn(readBytesStr, "Clear");
 //			comPortLogger.info(marker,"?? clear: {}", readBytesStr);
+			logger.trace("cleart - {}", readBytes);
 			if(waitTime!=100)
 				waitTime = 100;
 		}
-		logger.trace("exit - {}", readBytes);
 		return readBytes;
 	}
 
@@ -503,6 +531,7 @@ do{
 	}
 
 	public void setRun(boolean run) {
+		logger.entry(run);
 		synchronized (this) {
 			this.run = run;
 			notify();
@@ -541,15 +570,15 @@ do{
 	@Override
 	public boolean openPort() throws SerialPortException {
 		logger.entry();
-		
+
 		boolean isOpened;
 
 		synchronized (logger) {
 			isOpened = isOpened();
 
-			logger.debug("Port Name={} openPort() is Opened={}, run={}", getPortName(), isOpened, run);
+			logger.debug(this);
 
-			if (run && !isOpened) {
+			if (!isOpened) {
 				isOpened = super.openPort();
 				if (isOpened){
 					addEventListener(serialPortEvent);
@@ -557,6 +586,7 @@ do{
 				}
 			}
 		}
+		setRun(isOpened);
 		return logger.exit(isOpened);
 	}
 
@@ -566,7 +596,7 @@ do{
 		boolean isClosed = !isOpened();
 		logger.trace("1) Port Name={}, port is Closed={}", getPortName(), isClosed);
 
-		run = false;
+		setRun(false);
 		synchronized (logger) {
 			if (!isClosed) {
 				try {
