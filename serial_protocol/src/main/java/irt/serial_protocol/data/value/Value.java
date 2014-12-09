@@ -285,7 +285,7 @@ public class Value extends Observable{
 		return doStringFormat;
 	}
 
-	public void setDoStringFofrat(boolean doStringFormat) {
+	public void setDoStringFormat(boolean doStringFormat) {
 		this.doStringFormat = doStringFormat;
 	}
 

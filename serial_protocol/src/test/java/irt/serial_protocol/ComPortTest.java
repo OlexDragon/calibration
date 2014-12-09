@@ -44,7 +44,7 @@ public class ComPortTest {
 	public void test() throws Exception {
 		logger.entry();
 		Packet packet;
-		try (ComPort comPort = new ComPort("COM1")){
+		try (ComPort comPort = ComPort.getInstance("COM12")){
 			packet = comPort.send(linkedPacket);
 		}
 		for(Payload pl:packet.getPayloads())
