@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.data.prologix.PrologixCommands;
+import irt.calibration.data.prologix.PrologixCommand;
 import irt.calibration.helpers.PrologixWorker;
 import irt.calibration.helpers.SerialPortWorker;
 import irt.calibration.helpers.ThreadWorker;
@@ -31,7 +31,7 @@ public class PrologixController extends AnchorPane {
 
 	@FXML private BorderPane					 borderPanePrologix;
     @FXML private ChoiceBox<String>				 chbPrologixSerialPort;
-    @FXML private ChoiceBox<PrologixCommands>	 chbPrologixCommand;
+    @FXML private ChoiceBox<PrologixCommand>	 chbPrologixCommand;
     @FXML private Button						 btnPrologixConnect;
     @FXML private TextField						 tfPrologixValue;
     @FXML private TextField						 tfTimeout;
@@ -55,21 +55,22 @@ public class PrologixController extends AnchorPane {
 		}
 	}
 
-	@FXML void initialize() throws IOException {
+	@FXML void initialize() throws IOException, SerialPortException {
 		SerialPortWorker.addChoiceBoxs(chbPrologixSerialPort);
 		prologixWorker = new PrologixWorker(chbPrologixSerialPort, chbPrologixCommand, cbShowHelp, taPrologixAnswers);
+		onConnectPrologix();
+
+		chbPrologixCommand.getSelectionModel().selectedItemProperty().addListener((o,ov,nv)->tfPrologixValue.setText(""));
 	}
 
-    @FXML
-    void onPrologixConnect() throws SerialPortException {
+    @FXML void onConnectPrologix() throws SerialPortException {
 
     		if(SerialPortWorker.connect(chbPrologixSerialPort, btnPrologixConnect))
-    			prologixWorker.preset();
+    			onPreset();
     }
 
-    @FXML void onWrapTextPrplogix(ActionEvent event) {
-    	CheckBox cb = (CheckBox) event.getSource();
-    	taPrologixAnswers.setWrapText(cb.isSelected());
+    @FXML void onPreset() throws SerialPortException {
+		prologixWorker.preset();
     }
 
     @FXML void onSendPrologix() {
@@ -92,6 +93,11 @@ public class PrologixController extends AnchorPane {
     	} catch (Exception e) {
 			logger.catching(e);
 		}
+    }
+
+    @FXML void onWrapTextPrplogix(ActionEvent event) {
+    	CheckBox cb = (CheckBox) event.getSource();
+    	taPrologixAnswers.setWrapText(cb.isSelected());
     }
 
 	public void getUnitDetails(SerialPort serialPort) {

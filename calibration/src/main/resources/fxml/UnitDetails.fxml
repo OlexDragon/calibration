@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 
-<fx:root prefHeight="244.0" prefWidth="391.0" type="AnchorPane" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="244.0" prefWidth="391.0" type="AnchorPane"  xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <BorderPane fx:id="borderPaneUnit" layoutX="-44.0" layoutY="-61.0" prefHeight="200.0" prefWidth="243.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <top>

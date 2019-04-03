@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="448.0" type="AnchorPane" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root minWidth="483.0" type="AnchorPane" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <BorderPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <top>
@@ -20,12 +20,12 @@
                <children>
                   <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="3.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="3.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <ChoiceBox fx:id="chbPrologixSerialPort" />
-                        <Button fx:id="btnPrologixConnect" minWidth="60.0" mnemonicParsing="false" onAction="#onConnectPrologix" text="Connect" />
-                        <Button minWidth="50.0" mnemonicParsing="false" onAction="#onPreset" text="Preset" />
-                        <ChoiceBox fx:id="chbPrologixCommand" />
-                        <TextField fx:id="tfPrologixValue" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                        <Button minWidth="45.0" mnemonicParsing="false" onAction="#onSendPrologix" text="Send" />
+                        <TextField fx:id="tfPMAddress" prefColumnCount="3" promptText="Address" text="13" />
+                        <ChoiceBox fx:id="chbPMModel" />
+                        <ChoiceBox fx:id="chbPMLanguage" />
+                        <ChoiceBox fx:id="chbPMCommand" />
+                        <TextField fx:id="tfPMValue" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                        <Button minWidth="50.0" mnemonicParsing="false" onAction="#onSendPowerMeter" text="Send" />
                         <TextField fx:id="tfTimeout" prefColumnCount="4">
                            <tooltip>
                               <Tooltip text="Timeout. Default 20  ms." />
