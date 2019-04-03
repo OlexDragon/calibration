@@ -10,18 +10,22 @@ import javafx.scene.layout.BorderPane;
 
 public class CalibrationController{
 
-	private UnitController unitDetailsController;
-	private PrologixController prologixController;
+	private PowerMeterController powerMeterController;
+	private UnitController		 unitDetailsController;
+	private PrologixController	 prologixController;
 
     @FXML private BorderPane borderPaneUnit;
     @FXML private TextField tfUnitAddress;
 
-
     @FXML private TabPane tabPaneCalibration;
+    @FXML private Tab tabPowerMeter;
     @FXML private Tab tabUnit;
     @FXML private Tab tabPrologix;
 
     @FXML void initialize() throws IOException {
+
+    	powerMeterController = new PowerMeterController();
+    	tabPowerMeter.setContent(powerMeterController);
 
     	unitDetailsController = new UnitController();
     	tabUnit.setContent(unitDetailsController);

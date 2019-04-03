@@ -113,7 +113,7 @@ public class SerialPortWorker {
 
 		final SingleSelectionModel<String> selectionModel = choiceBox.getSelectionModel();
 
-		of(Optional.ofNullable(prefs.get(choiceBox.getId() + PORT, null)))
+		of(Optional.ofNullable(prefs.get(choiceBox.getId() + PORT, null)).filter(portName->choiceBox.getItems().contains(portName)))
 		.ifPresent(portName->selectionModel.select(portName))
 		.ifNotPresent(()->selectionModel.selectFirst());
 	}

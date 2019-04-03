@@ -103,19 +103,26 @@ public class UnitController extends AnchorPane {
     @FXML
     void onUnitConnect() {
 
-		if(unitWorker.connect(btnUnitConnect)) {
+    	try {
+    		if(unitWorker.connect(btnUnitConnect)) {
 
-			btnMute.setDisable(false);
-    		btnReload.setDisable(false);
-    		btnCalLMode.setDisable(false);
-    		onReload();
+    			setButtonsDisable(false);
+    			onReload();
 
-		}else {
-       		btnMute.setDisable(true);
-       		btnReload.setDisable(true);
-       		btnCalLMode.setDisable(true);
+    		}else 
+    			setButtonsDisable(true);
+
+    	}catch (Exception e) {
+			setButtonsDisable(true);
+			logger.catching(e);
     	}
     }
+
+	private void setButtonsDisable(boolean disable) {
+		btnMute.setDisable(disable);
+		btnReload.setDisable(disable);
+		btnCalLMode.setDisable(disable);
+	}
 
     @FXML
     void onReload() {

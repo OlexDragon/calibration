@@ -1,8 +1,24 @@
 
 package irt.calibration.data.prologix;
 
-public enum PrologixCommandsHelp {
+public enum PrologixCommandDescription {
 
+	SEND_TO_INSTRUMENT("The SEND_TO_INSTRUMENT command sends only the value from the text field."),
+	AUTO		("Prologix GPIB-USB controller can be configured to automatically address instruments to talk after sending them a command in order to read their response. The feature called,\r\n" + 
+			"Prologix GPIB-USB Controller User Manual\r\n" + 
+			"5/14/2013 9\r\n" + 
+			"Read-After-Write, saves the user from having to issue read commands repeatedly. This command enabled or disabled the Read-After-Write feature.\r\n" + 
+			"In addition, auto command also addresses the instrument at the currently specified address to TALK or LISTEN. ++auto 0 addresses the instrument to LISTEN and ++auto 1 addresses the instrument to TALK.\r\n" + 
+			"If the command is issued without any arguments it returns the current state of the read-after-write feature.\r\n" + 
+			"SYNTAX: ++auto [0|1]\r\n" + 
+			"MODES AVAILABLE: CONTROLLER\r\n" + 
+			"NOTE:\r\n" + 
+			"Some instruments generate “Query Unterminated” or “-420” error if they are addressed to talk after sending a command that does not generate a response (often called non-query commands). In effect the instrument is saying, I have been asked to talk but I have nothing to say. The error is often benign and may be ignored. Otherwise, use the ++read command to read the instrument response. For example:\r\n" + 
+			"++auto 0 — Turn off read-after-write and address instrument to listen\r\n" + 
+			"SET VOLT 1.0 — Non-query command\r\n" + 
+			"*idn? — Query command\r\n" + 
+			"++read eoi — Read until EOI asserted by instrument\r\n" + 
+			"\"HP54201A\" — Response from instrument"),
 	/**
 	 * The addr command is used to configure, or query the GPIB address
 	 */
@@ -16,7 +32,7 @@ public enum PrologixCommandsHelp {
 			"EXAMPLES:\r\n" + 
 			"++addr 5 – Set primary address to 5\r\n" + 
 			"++addr – Query current address\r\n" + 
-			"++addr 9 96 – Set primary address to 9 and secondary address to 0\r\n" + 
+			"++addr 9 96 – Set primary address to 9 and secondary address to 96\r\n" + 
 			"NOTE:\r\n" + 
 			"Default GPIB address of many HP-GL/2 plotters is 5."),
 	/**
@@ -110,25 +126,6 @@ public enum PrologixCommandsHelp {
 	HELP		("This command prints a brief summary of all available commands.\r\n" + 
 			"SYNTAX: ++help\r\n" + 
 			"MODES AVAILABLE: CONTROLLER, DEVICE"),
-
-	/**
-	 * Prologix GPIB-USB controller can be configured to automatically address instruments to talk after sending them a command in order to read their response.
-	 */
-	READ_AFTER_WRITE("Prologix GPIB-USB controller can be configured to automatically address instruments to talk after sending them a command in order to read their response. The feature called,\r\n" + 
-			"Prologix GPIB-USB Controller User Manual\r\n" + 
-			"5/14/2013 9\r\n" + 
-			"Read-After-Write, saves the user from having to issue read commands repeatedly. This command enabled or disabled the Read-After-Write feature.\r\n" + 
-			"In addition, auto command also addresses the instrument at the currently specified address to TALK or LISTEN. ++auto 0 addresses the instrument to LISTEN and ++auto 1 addresses the instrument to TALK.\r\n" + 
-			"If the command is issued without any arguments it returns the current state of the read-after-write feature.\r\n" + 
-			"SYNTAX: ++auto [0|1]\r\n" + 
-			"MODES AVAILABLE: CONTROLLER\r\n" + 
-			"NOTE:\r\n" + 
-			"Some instruments generate “Query Unterminated” or “-420” error if they are addressed to talk after sending a command that does not generate a response (often called non-query commands). In effect the instrument is saying, I have been asked to talk but I have nothing to say. The error is often benign and may be ignored. Otherwise, use the ++read command to read the instrument response. For example:\r\n" + 
-			"++auto 0 — Turn off read-after-write and address instrument to listen\r\n" + 
-			"SET VOLT 1.0 — Non-query command\r\n" + 
-			"*idn? — Query command\r\n" + 
-			"++read eoi — Read until EOI asserted by instrument\r\n" + 
-			"\"HP54201A\" — Response from instrument"),
 	/**
 	 * This command sends the Selected Device Clear (SDC) message to the currently specified GPIB address.
 	 */
@@ -246,11 +243,12 @@ public enum PrologixCommandsHelp {
 			"EXAMPLE:\r\n" + 
 			"++status 48 Specify serial poll status byte as 48. Since bit #6 is set, this\r\n" + 
 			"command will assert SRQ.\r\n" + 
-			"++status Query current serial poll status byte.");
+			"++status Query current serial poll status byte."),
+	;
 
 	private String help;
 
-	private PrologixCommandsHelp(String help){
+	private PrologixCommandDescription(String help){
 		this.help = help;
 	}
 
