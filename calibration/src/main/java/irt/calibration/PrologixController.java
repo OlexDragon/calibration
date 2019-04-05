@@ -2,14 +2,15 @@ package irt.calibration;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.data.power_meter.commands.PowerMeterCommand;
 import irt.calibration.data.prologix.PrologixCommand;
 import irt.calibration.helpers.PrologixWorker;
 import irt.calibration.helpers.SerialPortWorker;
-import irt.calibration.helpers.ThreadWorker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,7 +21,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import jssc.SerialPort;
 import jssc.SerialPortException;
 
 public class PrologixController extends AnchorPane {
@@ -100,10 +100,16 @@ public class PrologixController extends AnchorPane {
     	taPrologixAnswers.setWrapText(cb.isSelected());
     }
 
-	public void getUnitDetails(SerialPort serialPort) {
-		ThreadWorker.runThread(()->{
-			
-		});
+	public void setAddress(Integer addr) {
+		prologixWorker.setAddress(addr);
+	}
+
+	public void enableFontPanel() {
+		prologixWorker.enableFontPanel();
+	}
+
+	public void sendToolCommand(String command, Consumer<byte[]> consumer, int timeout) {
+		prologixWorker.get(command, consumer, timeout);
 	}
 
 }

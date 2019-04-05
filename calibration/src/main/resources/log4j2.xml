@@ -26,7 +26,8 @@
 
     <Loggers>
 
-		<logger name="irt.calibration.CalibrationApp" level="all" />
+<!-- 		<logger name="irt.calibration.CalibrationApp" level="all" /> -->
+		<logger name="irt.calibration.helpers.PrologixWorker" level="all" />
 
         <Root level="info">
             <AppenderRef ref="ConsoleAppender" />

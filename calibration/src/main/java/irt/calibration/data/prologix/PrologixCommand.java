@@ -1,6 +1,8 @@
 
 package irt.calibration.data.prologix;
 
+import irt.calibration.data.CommandType;
+
 public enum PrologixCommand {
 
 	SEND_TO_INSTRUMENT(""		, CommandType.BOTH, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
@@ -134,12 +136,5 @@ public enum PrologixCommand {
 	@Override
 	public String toString() {
 		return name();
-	}
-
-
-	public enum CommandType{
-		GET,
-		SET,
-		BOTH;
 	}
 }
