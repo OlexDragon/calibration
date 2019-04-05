@@ -13,9 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import irt.calibration.CalibrationApp;
+import irt.calibration.data.CommandType;
 import irt.calibration.data.Eos;
 import irt.calibration.data.prologix.PrologixCommand;
-import irt.calibration.data.prologix.PrologixCommand.CommandType;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -80,7 +80,8 @@ public class PrologixWorker {
 
 	private void writeThenRead(String command, int timeout, Consumer<byte[]> consumer){
 
-		Optional.ofNullable(chbPrologixSerialPort.getUserData()).map(SerialPort.class::cast).filter(SerialPort::isOpened).ifPresent(catchConsumerException(
+		getSerialPort().ifPresent(
+				catchConsumerException(
 
 				sp->{
 
@@ -138,9 +139,13 @@ public class PrologixWorker {
 				}));
 	}
 
+	private Optional<SerialPort> getSerialPort() {
+		return Optional.ofNullable(chbPrologixSerialPort.getUserData()).map(SerialPort.class::cast).filter(SerialPort::isOpened);
+	}
+
 	public void send(String value, int timeout) {
 
-		Optional.ofNullable(chbPrologixSerialPort.getUserData()).map(SerialPort.class::cast).filter(SerialPort::isOpened)
+		getSerialPort()
 		.ifPresent(
 				catchConsumerException(
 						sp->{
@@ -162,7 +167,7 @@ public class PrologixWorker {
 														}
 														synchronized (SerialPortWorker.class) {
 
-															write(sp, sc + " " + v);
+															write(sp, command + " " + v);
 														}
 													}))
 									.ifNotPresent(
@@ -175,7 +180,7 @@ public class PrologixWorker {
 	private void writeThenRead(String command, int timeout) throws SerialPortException {
 		writeThenRead(command, timeout,
 				bytes->{
-					logger.error("{}", bytes);
+					logger.debug("{}", bytes);
 					taPrologixAnswers.setText(taPrologixAnswers.getText() + new String(bytes));
 				});
 	}
@@ -186,7 +191,7 @@ public class PrologixWorker {
 
 		final byte[] bytes = (command + Eos.LF).getBytes();
 
-		logger.error("'{} : {}'", command, bytes);
+		logger.debug("'{} : {}'", command, bytes);
 
 		return serialPort.writeBytes(bytes);
 	}
@@ -195,7 +200,16 @@ public class PrologixWorker {
 		taPrologixAnswers.setText(prologixCommand.getDescription());
 	}
 
-	public void get(String command, Consumer<byte[]> consumer) {
+	public void get(String command, Consumer<byte[]> consumer, int timeout) {
+		writeThenRead(command, timeout, consumer);
 		
+	}
+
+	public void setAddress(Integer addr) {
+		getSerialPort().ifPresent(catchConsumerException(sp->write(sp, PrologixCommand.ADDR.getCommand() + " " + addr)));
+	}
+
+	public void enableFontPanel() {
+		getSerialPort().ifPresent(catchConsumerException(sp->write(sp, PrologixCommand.LOC.getCommand())));
 	}
 }
