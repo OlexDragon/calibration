@@ -2,12 +2,12 @@ package irt.calibration;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.data.Action;
 import irt.calibration.data.CommandType;
 import irt.calibration.data.power_meter.PM_Language;
 import irt.calibration.data.power_meter.PM_Model;
@@ -23,8 +23,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 
-public class PowerMeterController extends AnchorPane implements Action {
-
+public class PowerMeterController extends AnchorPane {
 	private final static Logger logger = LogManager.getLogger();
 
 	@FXML private TextField					 tfPMAddress;
@@ -41,8 +40,6 @@ public class PowerMeterController extends AnchorPane implements Action {
 	private Preferences prefs = Preferences.userNodeForPackage(getClass());
 
 	private final PrologixController prologixController;
-
-	private PowerMeterWorker powerMeterWorker;
 
 	public PowerMeterController(PrologixController prologixController) {
 
@@ -73,8 +70,6 @@ public class PowerMeterController extends AnchorPane implements Action {
 				.filter(v->!v.isEmpty()).map(v->Integer.parseInt(v))
 				.ifPresent(v->prefs.putInt("power_meter_address", v)));
 
-		powerMeterWorker = new PowerMeterWorker(chbPMLanguage, chbPMCommand);
-
 		chbPMLanguage.getSelectionModel().selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
@@ -88,6 +83,8 @@ public class PowerMeterController extends AnchorPane implements Action {
 					btnSend.setDisable(false);
 					tfPMValue.setDisable(Optional.ofNullable(nv).map(v->v.getCommandType()==CommandType.GET).orElse(true));
 				});
+
+		new PowerMeterWorker(chbPMLanguage, chbPMCommand);
 	}
 
     @FXML void onWrapTextPrplogix(ActionEvent event) {
@@ -97,7 +94,8 @@ public class PowerMeterController extends AnchorPane implements Action {
 
     @FXML void onSendPowerMeter() {
     	try {
-    		Optional.ofNullable(chbPMCommand.getSelectionModel().getSelectedItem()).ifPresent(this::sendCommand);
+
+    		sendCommand();
  
     	} catch (Exception e) {
 			logger.catching(e);
@@ -108,17 +106,36 @@ public class PowerMeterController extends AnchorPane implements Action {
     	prologixController.enableFontPanel();
     }
 
-	@Override
-	public void takeTction() {
-		Optional.of(tfPMAddress.getText()).map(t->t.replaceAll("\\D", "")).filter(t->!t.isEmpty()).map(Integer::parseInt).ifPresent(prologixController::setAddress);
+	private void sendCommand() {
+		get(bytes->taPMAnswers.setText(taPMAnswers.getText() + "\n" + Double.parseDouble(new String(bytes))));
 	}
 
-	private void sendCommand(PowerMeterCommand command) {
-		logger.error(command);
-		prologixController.sendToolCommand(
-				command.getCommand(),
-				bytes->taPMAnswers.setText(
-						taPMAnswers.getText() + "\n" + Double.parseDouble(new String(bytes))),
-				Optional.of(tfTimeout.getText()).map(t->t.replaceAll("\\S", "")).filter(t->!t.isEmpty()).map(Integer::parseInt).orElse(2000));
+	public void get(Consumer<byte[]> consumer) {
+		Optional.ofNullable(chbPMCommand.getSelectionModel().getSelectedItem())
+		.ifPresent(
+				command->{
+
+					logger.error(command);
+					synchronized (PrologixController.class) {
+
+						final Integer addr = Optional.of(tfPMAddress.getText())
+
+								.map(t->t.replaceAll("\\D", ""))
+								.filter(t->!t.isEmpty())
+								.map(Integer::parseInt)
+								.orElse(13);
+
+						prologixController.setAddress(addr);
+
+						final Integer timeout = Optional.of(tfTimeout.getText())
+
+								.map(t -> t.replaceAll("\\S", ""))
+								.filter(t -> !t.isEmpty())
+								.map(Integer::parseInt)
+								.orElse(2000);
+
+						prologixController.sendToolCommand(command.getCommand(), consumer, timeout);
+					}
+				});
 	}
 }

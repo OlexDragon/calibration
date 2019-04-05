@@ -1,13 +1,13 @@
-package irt.calibration.data.temperature;
+package irt.calibration.data.furnace.data;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.InvalidParameterException;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import irt.calibration.data.CommandType;
-import irt.calibration.data.temperature.data.ConstantMode;
-import irt.calibration.data.temperature.data.PowerStatus;
-import irt.calibration.data.temperature.data.RefrigerationCapacity;
-import irt.calibration.data.temperature.data.SettingData;
 
 public enum SCP_220_Command {
 
@@ -46,6 +46,8 @@ public enum SCP_220_Command {
 	PRGM_LIST	("PRGM LIST"	, CommandType.GET, null, "Setup of the specified program."),
 	POWER		("POWER"		, CommandType.SET, PowerStatus.class, "Turns control power ON/OFF. The chamber will start running in the constant mode.");
 
+	private final static Logger logger = LogManager.getLogger();
+
 	private final String command;
 	private final String description;
 	private final Class<? extends SettingData> dataClass;
@@ -72,6 +74,29 @@ public enum SCP_220_Command {
 
 	public Class<? extends SettingData> getDataClass() {
 		return dataClass;
+	}
+
+	public Optional<SettingData[]> getDataClassValues(){
+
+		return Optional.ofNullable(dataClass)
+				.map(
+						clazz->{
+							try {
+								return clazz.getMethod("values");
+							} catch (NoSuchMethodException | SecurityException e) {
+								logger.catching(e);
+							}
+							return null;
+						})
+				.map(
+						method->{
+							try {
+								return (SettingData[]) method.invoke(null);
+							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+								logger.catching(e);
+							}
+							return null;
+						});
 	}
 
 	public String commandGet() {

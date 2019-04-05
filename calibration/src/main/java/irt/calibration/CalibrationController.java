@@ -1,7 +1,6 @@
 package irt.calibration;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
@@ -19,6 +18,7 @@ public class CalibrationController{
     @FXML private TextField tfUnitAddress;
 
     @FXML private TabPane tabPaneCalibration;
+    @FXML private Tab tabFurnace;
     @FXML private Tab tabPowerMeter;
     @FXML private Tab tabUnit;
     @FXML private Tab tabPrologix;
@@ -30,9 +30,11 @@ public class CalibrationController{
 
     	powerMeterController = new PowerMeterController(prologixController);
     	tabPowerMeter.setContent(powerMeterController);
-		tabPowerMeter.setOnSelectionChanged(e->Optional.of(e.getSource()).filter(s->((Tab)s).isSelected()).ifPresent(s->powerMeterController.takeTction()));
 
-    	unitDetailsController = new UnitController();
+		final FurnaceController furnaceController = new FurnaceController(prologixController);
+		tabFurnace.setContent(furnaceController);
+
+		unitDetailsController = new UnitController();
     	tabUnit.setContent(unitDetailsController);
 
     }

@@ -1,4 +1,4 @@
-package irt.calibration.data.temperature.data;
+package irt.calibration.data.furnace.data;
 
 /**
  * @author Oleksandr

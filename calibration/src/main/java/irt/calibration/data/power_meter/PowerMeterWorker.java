@@ -4,6 +4,7 @@ import irt.calibration.data.power_meter.commands.PowerMeterCommand;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.SingleSelectionModel;
 
 public class PowerMeterWorker {
 
@@ -11,20 +12,17 @@ public class PowerMeterWorker {
 		ObservableList<PM_Language> value = FXCollections.observableArrayList(PM_Language.values());
 		chbPMLanguage.setItems(value);
 
-		chbPMLanguage.getSelectionModel().selectedItemProperty()
+		final SingleSelectionModel<PM_Language> selectionModel = chbPMLanguage.getSelectionModel();
+		selectionModel.selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->nv.getPowerMeterCommands()
 				.ifPresent(
-						comands->{
-							ObservableList<PowerMeterCommand> v = FXCollections.observableArrayList(comands);
+						commands->{
+							ObservableList<PowerMeterCommand> v = FXCollections.observableArrayList(commands);
 							chbPMCommand.setItems(v);
+							chbPMCommand.getSelectionModel().select(5);
 						})
 				);
+		selectionModel.select(0);
 	}
-
-	public void send(PowerMeterCommand command) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }
