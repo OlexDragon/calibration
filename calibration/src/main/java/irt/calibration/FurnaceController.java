@@ -101,6 +101,16 @@ public class FurnaceController extends AnchorPane{
 
     @FXML  void onSet() {
 
+		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
+
+		final SettingData selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
+		final String value = tfValue.getText().trim();
+
+		String commandSet = selectedCommand.commandSet(selectedData, value);
+
+		sendCommand(commandSet);
+	
+
     }
 
     @FXML void onWrapText() {
@@ -108,7 +118,7 @@ public class FurnaceController extends AnchorPane{
     }
 
 	private void sendCommand(String command) {
-		sendCommand(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + Double.parseDouble(new String(bytes))));
+		sendCommand(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
 	}
 
 	private void sendCommand(String command, Consumer<byte[]> consumer) {

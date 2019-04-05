@@ -1,6 +1,5 @@
 package irt.calibration.data.furnace.data;
 
-import java.security.InvalidParameterException;
 import java.util.Optional;
 
 public enum ConstantMode implements SettingData {
@@ -18,7 +17,6 @@ public enum ConstantMode implements SettingData {
 
 	@Override
 	public String toString(String value) {
-		Optional.ofNullable(value).orElseThrow(()->new InvalidParameterException("The Value can not be null"));
-		return command + value;
+		return Optional.ofNullable(value).map(v->command + v.trim()).orElse(command);
 	}
 }
