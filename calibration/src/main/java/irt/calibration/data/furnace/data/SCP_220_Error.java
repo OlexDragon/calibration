@@ -1,4 +1,4 @@
-package irt.calibration.data.temperature;
+package irt.calibration.data.furnace.data;
 
 import java.util.Arrays;
 

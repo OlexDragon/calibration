@@ -1,13 +1,14 @@
-package irt.calibration.data.temperature.data;
+package irt.calibration.data.furnace.data;
 
 import java.security.InvalidParameterException;
 import java.util.Optional;
 
 public enum ConstantMode implements SettingData {
 
-	TARGET("S"),
-	HIGH_LIMIT("H"),
-	LOW_LIMIT("l");
+	NONE(""),
+	TARGET(",S"),
+	HIGH_LIMIT(",H"),
+	LOW_LIMIT(",l");
 
 	private final String command;
 

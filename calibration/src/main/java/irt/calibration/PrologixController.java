@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.data.power_meter.commands.PowerMeterCommand;
 import irt.calibration.data.prologix.PrologixCommand;
 import irt.calibration.helpers.PrologixWorker;
 import irt.calibration.helpers.SerialPortWorker;
