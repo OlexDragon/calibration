@@ -8,9 +8,10 @@ import java.util.prefs.Preferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.data.furnace.FurnaceWorker;
-import irt.calibration.data.furnace.data.SCP_220_Command;
-import irt.calibration.data.furnace.data.SettingData;
+import irt.calibration.tools.CommandType;
+import irt.calibration.tools.furnace.FurnaceWorker;
+import irt.calibration.tools.furnace.data.SCP_220_Command;
+import irt.calibration.tools.furnace.data.SettingData;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -78,9 +79,27 @@ public class FurnaceController extends AnchorPane{
 		chbCommandParameter.getSelectionModel().selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
-					btnGet.setDisable(false);
-					btnSet.setDisable(false);
-					tfValue.setDisable(false);
+					final CommandType commandType = nv.getCommandType();
+					switch(commandType) {
+
+					case GET:
+						btnGet.setDisable(false);
+						btnSet.setDisable(true);
+						tfValue.setDisable(true);
+						break;
+
+					case SET:
+						btnGet.setDisable(true);
+						btnSet.setDisable(false);
+						tfValue.setDisable(false);
+						break;
+
+					default:
+						btnGet.setDisable(false);
+						btnSet.setDisable(false);
+						tfValue.setDisable(false);
+					
+					}
 				});
 
 		new FurnaceWorker(chbCommand, chbCommandParameter);

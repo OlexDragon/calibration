@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import irt.calibration.data.packets.converters.UnitsConverter;
+import irt.calibration.tools.unit.packets.converters.UnitsConverter;
 
 public class UnitsConverterTest {
 

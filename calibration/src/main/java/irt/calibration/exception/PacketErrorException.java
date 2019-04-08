@@ -1,7 +1,7 @@
 package irt.calibration.exception;
 
-import irt.calibration.data.packets.enums.Error;
-import irt.calibration.data.packets.parents.Packet;
+import irt.calibration.tools.unit.packets.enums.Error;
+import irt.calibration.tools.unit.packets.parents.Packet;
 
 public class PacketErrorException extends IllegalArgumentException{
 	private static final long serialVersionUID = -3211581231686617310L;

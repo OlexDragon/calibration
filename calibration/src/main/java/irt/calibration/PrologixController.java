@@ -7,9 +7,9 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.data.prologix.PrologixCommand;
-import irt.calibration.helpers.PrologixWorker;
 import irt.calibration.helpers.SerialPortWorker;
+import irt.calibration.tools.prologix.PrologixCommand;
+import irt.calibration.tools.prologix.PrologixWorker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

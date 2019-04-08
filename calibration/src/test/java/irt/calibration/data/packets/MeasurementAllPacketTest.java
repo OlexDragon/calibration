@@ -6,7 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import irt.calibration.data.packets.parents.Packet;
+import irt.calibration.tools.unit.packets.PacketMeasurementAll;
+import irt.calibration.tools.unit.packets.parents.Packet;
 
 public class MeasurementAllPacketTest {
 
