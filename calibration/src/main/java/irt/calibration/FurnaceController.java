@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.furnace.FurnaceWorker;
+import irt.calibration.tools.furnace.Temperature;
 import irt.calibration.tools.furnace.data.SCP_220_Command;
 import irt.calibration.tools.furnace.data.SettingData;
 import javafx.fxml.FXML;
@@ -115,7 +116,7 @@ public class FurnaceController extends AnchorPane{
 		if(data!=null && !data.isEmpty())
 			commandGet += data;
 
-		sendCommand(commandGet);
+		sendCommand(commandGet,  bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes)));
 	}
 
     @FXML  void onSet() {
