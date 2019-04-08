@@ -11,8 +11,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import irt.calibration.data.packets.PacketMeasurementAll;
 import irt.calibration.exception.ExceptionWrapper;
+import irt.calibration.tools.unit.packets.PacketMeasurementAll;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
