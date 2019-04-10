@@ -6,7 +6,7 @@ import irt.calibration.tools.CommandType;
  * @author Oleksandr
  *
  */
-public enum RefrigerationCapacity implements SettingData{
+public enum RefrigerationCapacity implements CommandParameter{
 
 	/*
 	 * 	REF0 : Refrigeration OFF

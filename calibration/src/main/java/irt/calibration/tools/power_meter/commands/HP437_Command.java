@@ -7,6 +7,7 @@ import irt.calibration.tools.prologix.PrologixCommand;
 public enum HP437_Command implements ToolCommand {
 
 	ID					("*ID?",CommandType.GET),
+	ERROR				("ERR?", CommandType.GET),
 	TRIGGER_HOLD		("TR0", CommandType.GET),
 	TRIGGER_IMMEDIATE	("TR1", CommandType.GET),
 	TRIGGER_WITH_DELAY	("TR2", CommandType.GET),

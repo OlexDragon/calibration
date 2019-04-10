@@ -6,16 +6,19 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class Average{
-	private final static Logger logger = LogManager.getLogger();
+//	private final static Logger logger = LogManager.getLogger();
 
-	private final List<Number> list = new ArrayList<>();
+	private final List<Double> list = new ArrayList<>();
 
 	public void addValue(Number value) {
-		list.add(value);
+
+		final double doubleValue = value.doubleValue();
+
+		if(doubleValue==Double.NaN)
+			return;
+
+		list.add(doubleValue);
 	}
 
 	public double getAverageValue() {
@@ -26,7 +29,7 @@ public class Average{
 		return list.size();
 	}
 
-	private double getAverage(List<Number> list) {
+	private double getAverage(List<Double> list) {
 
 		Boolean filterTopPeaks = null;
 		do {
@@ -34,19 +37,17 @@ public class Average{
 			double average = summary.getAverage(); double min = summary.getMin(); double max = summary.getMax();
 			double middle = (max-min)/2+min; long difference = Math.round(middle - average);
 
-			logger.error("{}; middle={}; difference={};", summary, middle, difference);
 			if(difference==0)
 				return average;
 
 			boolean topPeaks = difference>0;
-			logger.error("topPeaks={}; filterTopPeaks={}", topPeaks, filterTopPeaks);
 			if(filterTopPeaks == null)
 				filterTopPeaks = topPeaks;
 
 			if(topPeaks!=filterTopPeaks)
 				return average;
 
-			Predicate<? super Number> predicate;
+			Predicate<Double> predicate;
 			double target;
 			if(topPeaks) {
 				target = 2*average - min;
@@ -56,7 +57,6 @@ public class Average{
 				predicate = topPeaks ? d->d.doubleValue()<=target : d->d.doubleValue()>=target;
 			}
 
-			logger.error("target={}", target);
 			list = list.parallelStream().filter(predicate).collect(Collectors.toList());
 
 		}while(true);
@@ -64,6 +64,6 @@ public class Average{
 
 	@Override
 	public String toString() {
-		return "AverageValue [list=" + list + "]";
+		return "AverageValue [count=" +getCount() + ", list=" + list + "]";
 	}
 }

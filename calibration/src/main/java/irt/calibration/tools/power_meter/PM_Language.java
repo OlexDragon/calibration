@@ -62,4 +62,9 @@ public enum PM_Language{
 						})
 				.map(ToolCommand[].class::cast);
 	}
+
+	@Override
+	public String toString() {
+		return name();
+	}
 }

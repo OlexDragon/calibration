@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import irt.calibration.tools.CommandType;
 
-public enum ConstantMode implements SettingData {
+public enum ConstantMode implements CommandParameter {
 
 	NONE("", CommandType.GET),
 	TARGET("S", CommandType.SET),
