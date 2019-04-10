@@ -74,7 +74,7 @@ public class CalibrationApp extends Application {
 		SerialPortWorker.disconect();
 	}
 
-	private<T> T getException(Class<T> returnClass, Throwable throwable) {
+	public static <T> T getException(Class<T> returnClass, Throwable throwable) {
 
 		if(throwable == null)
 			return null;
@@ -126,6 +126,7 @@ public class CalibrationApp extends Application {
     	final SerialPortTimeoutException serialPortTimeoutException = getException(SerialPortTimeoutException.class, throwable);
     	if(serialPortTimeoutException != null) {
 
+    		logger.error(logger.getName());
     		logger.catching(Level.DEBUG, throwable);
 			showAlert("Connection error.", "Connection timeout", AlertType.ERROR);
     		return;

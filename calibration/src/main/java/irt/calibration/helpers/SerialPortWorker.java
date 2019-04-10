@@ -103,14 +103,14 @@ public class SerialPortWorker {
 
 	public static void addChoiceBoxs(ChoiceBox<String> choiceBox) {
 
+		// Fill choice box with serial port names
 		ObservableList<String> value = FXCollections.observableArrayList(portNames);
 		choiceBox.setItems(value);
 
-		final Stream<ChoiceBox<String>> stream = choiceBoxs.stream();
+		//remove selected serial port name from other choice boxes
+		choiceBoxs.stream().filter(chb->chb.getSelectionModel().getSelectedIndex()>=0).forEach(chb->removeFromOther(chb.getSelectionModel().getSelectedItem(), chb));
 
 		choiceBoxs.add(choiceBox);
-
-		stream.filter(chb->chb.getSelectionModel().getSelectedIndex()>=0).forEach(chb->removeFromOther(chb.getSelectionModel().getSelectedItem(), chb));
 
 		final SingleSelectionModel<String> selectionModel = choiceBox.getSelectionModel();
 

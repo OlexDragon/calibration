@@ -8,11 +8,14 @@ import java.util.prefs.Preferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.Tool;
 import irt.calibration.tools.furnace.FurnaceWorker;
 import irt.calibration.tools.furnace.Temperature;
+import irt.calibration.tools.furnace.data.ConstantMode;
 import irt.calibration.tools.furnace.data.SCP_220_Command;
-import irt.calibration.tools.furnace.data.SettingData;
+import irt.calibration.tools.furnace.data.CommandParameter;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -21,15 +24,19 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import jssc.SerialPortException;
 
-public class FurnaceController extends AnchorPane{
+public class FurnaceController extends AnchorPane implements Tool{
 	private final static Logger logger = LogManager.getLogger();
+
+	private static final int DEFAULT_ADDRESS = 2;
+	private static final int DEFAULT_TIMEOUT = 1000;
 
 	private Preferences prefs = Preferences.userNodeForPackage(getClass());
 
     @FXML private TextField tfAddress;
     @FXML private ChoiceBox<SCP_220_Command> chbCommand;
-    @FXML private ChoiceBox<SettingData> chbCommandParameter;
+    @FXML private ChoiceBox<CommandParameter> chbCommandParameter;
     @FXML private TextField tfValue;
     @FXML private TextField tfTimeout;
     @FXML private CheckBox cbShowHelp;
@@ -39,6 +46,9 @@ public class FurnaceController extends AnchorPane{
     @FXML private Button btnSet;
 
 	private final PrologixController prologixController;
+
+	private Integer address;
+	private Integer timeout;
 
 	public FurnaceController(PrologixController prologixController) {
 
@@ -59,6 +69,9 @@ public class FurnaceController extends AnchorPane{
 
 	@FXML void initialize() throws IOException {
 
+		Tool.initializeTextField(tfAddress, "furnace_address", DEFAULT_ADDRESS, v->address=v);
+		Tool.initializeTextField(tfTimeout, "furnace_timeout", DEFAULT_TIMEOUT, v->timeout=v);
+
 		Optional.ofNullable(prefs.getInt("furnace_address", -1)).filter(addr->addr>0).ifPresent(addr->tfAddress.setText(Integer.toString(addr)));
 		tfAddress.focusedProperty()
 		.addListener(
@@ -75,7 +88,7 @@ public class FurnaceController extends AnchorPane{
 					btnSet.setDisable(true);
 					btnGet.setDisable(true);
 					tfValue.setDisable(true);
-					chbCommandParameter.setDisable(!nv.getDataClassValues().isPresent());
+					chbCommandParameter.setDisable(!nv.getParameterValues().isPresent());
 				});
 		chbCommandParameter.getSelectionModel().selectedItemProperty()
 		.addListener(
@@ -106,12 +119,25 @@ public class FurnaceController extends AnchorPane{
 		new FurnaceWorker(chbCommand, chbCommandParameter);
 	}
 
-	@FXML void onGet() {
+    @FXML void onGetTemperature() throws SerialPortException, PrologixTimeoutException {
+		final Consumer<byte[]> consumer = bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes));
+    	getTemperature(consumer);
+    }
+
+	public void getTemperature(final Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
+		sendCommand(SCP_220_Command.TEMP.commandGet(),  consumer);
+	}
+
+	public void setTemperature(double target, final Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
+		sendCommand(SCP_220_Command.TEMP.commandSet(ConstantMode.TARGET, Double.toString(target)),  consumer);
+	}
+
+	@FXML void onGet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
 		String commandGet = selectedCommand.commandGet();
 
-		final SettingData selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
+		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
 		final String data = selectedData.toString(null);
 		if(data!=null && !data.isEmpty())
 			commandGet += data;
@@ -119,37 +145,37 @@ public class FurnaceController extends AnchorPane{
 		sendCommand(commandGet,  bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes)));
 	}
 
-    @FXML  void onSet() {
+    @FXML  void onSet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
 
-		final SettingData selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
+		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
 		final String value = tfValue.getText().trim();
 
 		String commandSet = selectedCommand.commandSet(selectedData, value);
 
 		sendCommand(commandSet);
-	
-
     }
 
     @FXML void onWrapText() {
 
     }
 
-	private void sendCommand(String command) {
+	private void sendCommand(String command) throws SerialPortException, PrologixTimeoutException {
 		sendCommand(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
 	}
 
-	private void sendCommand(String command, Consumer<byte[]> consumer) {
+	private void sendCommand(String command, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
 		logger.error(command);
 		synchronized (PrologixController.class) {
 
-			final Integer addr = Optional.of(tfAddress.getText()).map(t->t.replaceAll("\\D", "")).filter(t->!t.isEmpty()).map(Integer::parseInt).orElse(2);
-			prologixController.setAddress(addr);
-
-			final Integer timeout = Optional.of(tfTimeout.getText()).map(t -> t.replaceAll("\\S", "")).filter(t -> !t.isEmpty()).map(Integer::parseInt).orElse(2000);
+			prologixController.setAddress(address);
 			prologixController.sendToolCommand(command, consumer, timeout);
 		}
+	}
+
+	@Override
+	public void setAddress() {
+		prologixController.setAddress(address);
 	}
 }

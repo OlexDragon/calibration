@@ -1,16 +1,14 @@
 package irt.calibration.tools.furnace.data;
 
-import java.lang.reflect.InvocationTargetException;
+import static irt.calibration.tools.CommandWithParameter.getValuesOf;
+
 import java.security.InvalidParameterException;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import irt.calibration.tools.CommandType;
-import irt.calibration.tools.ToolCommand;
+import irt.calibration.tools.CommandWithParameter;
 
-public enum SCP_220_Command implements ToolCommand {
+public enum SCP_220_Command implements CommandWithParameter {
 
 	LAST_RESULT	(""				, CommandType.GET, null, "The processing result for the last processed command."),
 	ROM			("ROM"			, CommandType.GET, null, "ROM version."),
@@ -31,7 +29,7 @@ public enum SCP_220_Command implements ToolCommand {
 	HUMI		("HUMI"			, CommandType.BOTH, ConstantMode.class			, "Humidity parameters for the constant mode."),
 	SET			("SET"			, CommandType.BOTH, RefrigerationCapacity.class	, "Refrigeration capacity control setup."),
 	REF			("REF"			, CommandType.GET, null, "Refrigeration output."),
-	RELAY		("RELAY"		, CommandType.BOTH, PowerStatus.class, "Constant mode time signal ON/OFF setup."),
+	RELAY		("RELAY"		, CommandType.BOTH, PowerStatusFurnace.class, "Constant mode time signal ON/OFF setup."),
 	HEATER_OUTPUT("%"			, CommandType.GET, null, "Heater output."),
 	PRGM_MON	("PRGM MON"		, CommandType.GET, null, "Run status of the current program."),
 	PRGM_SET	("PRGM SET"		, CommandType.GET, null, "Program end mode of the current program."),
@@ -45,19 +43,19 @@ public enum SCP_220_Command implements ToolCommand {
 	RUN_PRGM_MON("RUN PRGM MON"	, CommandType.GET, null, "Run status of the current remote program."),
 	RUN_PRGM	("RUN PRGM"		, CommandType.GET, null, "Program end mode of the current remote program."),
 	PRGM_LIST	("PRGM LIST"	, CommandType.GET, null, "Setup of the specified program."),
-	POWER		("POWER"		, CommandType.SET, PowerStatus.class, "Turns control power ON/OFF. The chamber will start running in the constant mode.");
+	POWER		("POWER"		, CommandType.SET, PowerStatusFurnace.class, "Turns control power ON/OFF. The chamber will start running in the constant mode.");
 
-	private final static Logger logger = LogManager.getLogger();
+//	private final static Logger logger = LogManager.getLogger();
 
 	private final String command;
 	private final String description;
-	private final Class<? extends SettingData> dataClass;
+	private final Class<? extends CommandParameter> parameterClass;
 	private final CommandType commandType;
 
-	private SCP_220_Command(String command, CommandType commandType, Class<? extends SettingData> dataClass, String description) {
+	private SCP_220_Command(String command, CommandType commandType, Class<? extends CommandParameter> dataClass, String description) {
 		this.command = command;
 		this.commandType = commandType;
-		this.dataClass = dataClass;
+		this.parameterClass = dataClass;
 		this.description = description;
 	}
 
@@ -75,43 +73,26 @@ public enum SCP_220_Command implements ToolCommand {
 		return description;
 	}
 
-	public Class<? extends SettingData> getDataClass() {
-		return dataClass;
+	public Class<? extends CommandParameter> getCommandParameterClass() {
+		return parameterClass;
 	}
 
-	public Optional<SettingData[]> getDataClassValues(){
+	@Override
+	public Optional<CommandParameter[]> getParameterValues(){
 
-		return Optional.ofNullable(dataClass)
-				.map(
-						clazz->{
-							try {
-								return clazz.getMethod("values");
-							} catch (NoSuchMethodException | SecurityException e) {
-								logger.catching(e);
-							}
-							return null;
-						})
-				.map(
-						method->{
-							try {
-								return (SettingData[]) method.invoke(null);
-							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-								logger.catching(e);
-							}
-							return null;
-						});
+		return getValuesOf(parameterClass);
 	}
 
 	public String commandGet() {
 		return command + "?";
 	}
 
-	public String commandSet(SettingData settingData, String value) {
+	public String commandSet(CommandParameter settingData, String value) {
 
 		Optional.ofNullable(settingData)
 		.filter(sd->settingData!=null)
 		.map(Object::getClass)
-		.filter(c->c.equals(dataClass))
+		.filter(c->c.equals(parameterClass))
 		.orElseThrow(()->new InvalidParameterException());
 
 		return command + "," + settingData.toString(value);
