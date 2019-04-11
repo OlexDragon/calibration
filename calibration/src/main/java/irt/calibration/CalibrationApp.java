@@ -55,7 +55,7 @@ public class CalibrationApp extends Application {
 
 		icons.add(new Image(getClass().getResourceAsStream("/images/calibration.ico")));
 
-		String fxmlFile = "/fxml/Calibration.fxml";
+		String fxmlFile = "/fxml/Main.fxml";
         FXMLLoader loader = new FXMLLoader();
         Parent rootNode = (Parent) loader.load(getClass().getResourceAsStream(fxmlFile));
 

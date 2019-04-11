@@ -8,6 +8,7 @@ import java.util.prefs.Preferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.PrologixController.AoutoMode;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.Tool;
@@ -169,6 +170,7 @@ public class FurnaceController extends AnchorPane implements Tool{
 		logger.error(command);
 		synchronized (PrologixController.class) {
 
+			prologixController.setAuto(AoutoMode.ON);
 			prologixController.setAddress(address);
 			prologixController.sendToolCommand(command, consumer, timeout);
 		}

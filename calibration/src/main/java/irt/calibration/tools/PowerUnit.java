@@ -3,7 +3,6 @@ package irt.calibration.tools;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Optional;
-import java.util.function.Function;
 
 import irt.calibration.tools.furnace.data.CommandParameter;
 
@@ -15,7 +14,7 @@ public enum PowerUnit implements CommandParameter{
 
 	DBM	("DBM"	, CommandType.SET),
 	DB	("DB"	, CommandType.SET),
-	NONE(""		, CommandType.GET);
+	GET(""		, CommandType.GET);
 
 	private final String command;
 	private final CommandType commandType;

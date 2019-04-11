@@ -17,7 +17,7 @@ public enum FrequencyUnit implements CommandParameter{
 	MHZ	("MHZ"	, CommandType.SET, v->v/1000		, v->v			, v->v*1000		, v->v*1000000),
 	KHZ	("KHZ"	, CommandType.SET, v->v/1000000		, v->v/1000		, v->v			, v->v*1000),
 	HZ	("HZ"	, CommandType.SET, v->v/1000000000	, v->v/1000000	, v->v/1000		, v->v),
-	NONE(""		, CommandType.GET, null, null, null, null);
+	GET(""		, CommandType.GET, null, null, null, null);
 
 	private final String command;
 	private final CommandType commandType;

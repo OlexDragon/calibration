@@ -1,7 +1,10 @@
 package irt.calibration;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -34,7 +37,7 @@ import jssc.SerialPortException;
 
 public class PrologixController extends AnchorPane {
 
-	private static final int DEFAULT_TIMEOUT = 20;
+	private static final int DEFAULT_TIMEOUT = 100;
 
 	private final static Logger logger = LogManager.getLogger();
 
@@ -52,10 +55,6 @@ public class PrologixController extends AnchorPane {
 	private Boolean prlogixConnected;
 
 	private final ChangeListener<? super PrologixCommand> commandListener = (o, ov, nv)->{
-
-		prologixWorker.setPrologixCommand(nv);
-		taPrologixAnswers.setText(taPrologixAnswers.getText() + "\n" + prologixWorker.getPrologixCommand() + " : ");
-
 		Optional.ofNullable(cbShowHelp).filter(CheckBox::isSelected).ifPresent(cb->showHelp(nv));
 	};
 
@@ -80,7 +79,7 @@ public class PrologixController extends AnchorPane {
 
 	@FXML void initialize() throws IOException, SerialPortException, PrologixTimeoutException {
 
-		Tool.initializeTextField( tfTimeout, "prologix_timeout", 100, v->timeout=v);
+		Tool.initializeTextField( tfTimeout, "prologix_timeout", DEFAULT_TIMEOUT, v->timeout=v);
 		// Show Help Check Box
 		final SingleSelectionModel<PrologixCommand> selectionModel = chbPrologixCommand.getSelectionModel();
 		cbShowHelp.setOnAction(e->Optional.ofNullable(selectionModel.getSelectedItem()).filter(sc->cbShowHelp.isSelected()).ifPresent(sc->showHelp(sc)));
@@ -104,6 +103,10 @@ public class PrologixController extends AnchorPane {
 		chbPrologixCommand.getSelectionModel().selectedItemProperty().addListener((o,ov,nv)->tfPrologixValue.setText(""));
 	}
 
+    @FXML void onClear(ActionEvent event) {
+    	taPrologixAnswers.setText("");
+    }
+
 	@FXML void onConnectPrologix(){
 
     		if(SerialPortWorker.connect(chbPrologixSerialPort, btnPrologixConnect))
@@ -119,35 +122,16 @@ public class PrologixController extends AnchorPane {
     }
 
     @FXML void onPreset() throws SerialPortException, PrologixTimeoutException {
-		prologixWorker
-		.preset(
-				bytes->{
-					String string = new String(bytes);
-					taPrologixAnswers.setText(string);
-				}, timeout);
+    	send(PrologixCommand.VER, null, timeout, getConsumer(null));
+    	send(PrologixCommand.SAVECFG, "0", timeout, getConsumer(null));
+    	send(PrologixCommand.MODE, "1", timeout, getConsumer(null));
     }
 
-    @FXML void onSendPrologix() {
+	@FXML void onSendPrologix() {
     	try {
 
-    		String text = tfPrologixValue.getText();
-			String txtTimeout = tfTimeout.getText();
-			int timeout = Optional.ofNullable(txtTimeout)
-
-					.map(to->to.replaceAll("\\D", ""))
-					.filter(to->!to.isEmpty())
-					.map(Integer::valueOf)
-					.filter(to->to!=0)
-					.orElse(DEFAULT_TIMEOUT);
-
-			tfTimeout.setText(Integer.toString(timeout));
-
-			final Consumer<byte[]> consumer = bytes->{
-				logger.debug("{}", bytes);
-				taPrologixAnswers.setText(taPrologixAnswers.getText() + new String(bytes));
-			};
-			prologixWorker.send(text, timeout,
-					consumer);
+    		String value = tfPrologixValue.getText();
+			send(getSelectedCommand(), value, timeout, getConsumer(null));
 
 		}catch (Exception e) {
 			prlogixConnected = false;
@@ -173,19 +157,69 @@ public class PrologixController extends AnchorPane {
 		taPrologixAnswers.setText(prologixCommand.getDescription());
 	}
 
+	private final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yy HH:mm:SS -> ");
+
+	private Integer address;
+
 	public void setAddress(Integer addr) {
-		prologixWorker.setAddress(addr);
+
+		if(address!=null && address.equals(addr))
+			return;
+
+		this.address = addr;
+		send(PrologixCommand.ADDR, Optional.ofNullable(addr).map(i->i.toString()).orElse(null), timeout, getConsumer(null));
+	}
+
+	private void writeToTextArea(PrologixCommand command, String value) {
+		Date date = new Date();
+		taPrologixAnswers.setText(taPrologixAnswers.getText() + '\n' + DATE_FORMAT.format(date) + command +  ": " + value);
+	}
+
+	private Consumer<byte[]> getConsumer(Consumer<byte[]> consumer) {
+		return bytes->{
+
+			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
+
+			String answer = new String(bytes);
+			logger.debug("{} : {}", answer, bytes);
+			taPrologixAnswers.setText(taPrologixAnswers.getText() + " = " + answer +'\n');
+		};
 	}
 
 	public void enableFontPanel() {
-		prologixWorker.enableFontPanel();
+		send(PrologixCommand.LOC, null, timeout, getConsumer(null));
 	}
 
-	public void sendToolCommand(String command, Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
-		prologixWorker.get(command, consumer, timeout);
+	public void sendToolCommand(String toolCommand, Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
+		send(PrologixCommand.SEND_TO_INSTRUMENT, toolCommand, timeout, getConsumer(consumer));
 	}
 
 	public boolean isPrologixConnected() {
 		return Optional.ofNullable(prlogixConnected).orElse(false);
+	}
+
+	private AoutoMode autoMode;
+	public void setAuto(AoutoMode autoMode) {
+
+		if(this.autoMode!=null && this.autoMode.equals(autoMode))
+			return;
+
+		this.autoMode = autoMode;
+		send(PrologixCommand.AUTO ,Integer.toString(autoMode.ordinal()), timeout, getConsumer(null));
+	}
+
+    private void send(PrologixCommand command, String value, Integer timeout, Consumer<byte[]> consumer) {
+		writeToTextArea(command, value==null ? command.getCommandType().toString() : value);
+    	prologixWorker.send(command, value, timeout, consumer);
+	}
+
+	private PrologixCommand getSelectedCommand() {
+		return chbPrologixCommand.getSelectionModel().getSelectedItem();
+	}
+
+	public enum AoutoMode {
+
+		OFF,
+		ON
 	}
 }

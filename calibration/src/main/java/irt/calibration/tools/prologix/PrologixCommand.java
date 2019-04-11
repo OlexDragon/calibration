@@ -6,6 +6,8 @@ import irt.calibration.tools.CommandType;
 public enum PrologixCommand {
 
 	SEND_TO_INSTRUMENT(""		, CommandType.BOTH, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
+	INSTRUMENT_GET(""			, CommandType.GET, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
+	INSTRUMENT_SET(""			, CommandType.SET, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
 	/**
 	 * Prologix GPIB-USB controller can be configured to automatically address instruments to talk after sending them a command in order to read their response.
 	 */
