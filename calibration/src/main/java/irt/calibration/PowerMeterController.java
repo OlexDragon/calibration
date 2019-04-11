@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.PrologixController.AoutoMode;
 import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.ThreadWorker;
@@ -187,6 +188,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 								chbPMCommand.setItems(items);
 								chbPMCommand.getSelectionModel().select(HP437_Command.DEFAULT_READ);
 							});
+					if(powerMeterConnected)
 					synchronized (ToolCommand.class) {
 						try {
 							setAddress();
@@ -197,34 +199,46 @@ public class PowerMeterController extends AnchorPane implements Tool{
 					}
 				});
 		selectionModel.select(0);
-		
-		try {
-			prologixController.sendToolCommand(PM_Language.getToolCommand(null).getCommand(),
-							bytes->{
-								try {
 
-									String name = new String(bytes).trim();
-									logger.error(name);
-									final PM_Language language = PM_Language.valueOf(name);
-									selectionModel.select(language);
+		ObservableList<PM_Model> models = FXCollections.observableArrayList(PM_Model.values());
+		chbPMModel.setItems(models);
+		int index = prefs.getInt("power_meter_model", 0);
 
-								} catch (Exception e) {
-									logger.catching(Level.ERROR, e);
-								}
-							}, getTimeout());
-			powerMeterConnected = true;
-		} catch (Exception e) {
+		SingleSelectionModel<PM_Model> sm = chbPMModel.getSelectionModel();
+		sm.select(index);
+		sm.selectedIndexProperty().addListener((o, ov, nv)->Optional.of(nv.intValue()).filter(i->i>=0).ifPresent(i->prefs.putInt("power_meter_model", i)));
 
-			PrologixTimeoutException ex = CalibrationApp.getException(PrologixTimeoutException.class, e);
-			if(ex!=null) {
-				logger.catching(Level.DEBUG, e);
-				CalibrationApp.showAlert("Timeout.", "Unable to read Power Meter settings.", AlertType.ERROR);
-				powerMeterConnected = false;
-				return;
+		Optional.ofNullable(sm.getSelectedItem()).filter(model->model.getLanguages()!=null)
+		.ifPresent(languages->{
+
+			try {
+				prologixController.sendToolCommand(PM_Language.getToolCommand(null).getCommand(),
+								bytes->{
+									try {
+
+										String name = new String(bytes).trim();
+										logger.error(name);
+										final PM_Language language = PM_Language.valueOf(name);
+										selectionModel.select(language);
+
+									} catch (Exception e) {
+										logger.catching(Level.ERROR, e);
+									}
+								}, getTimeout());
+				powerMeterConnected = true;
+			} catch (Exception e) {
+
+				PrologixTimeoutException ex = CalibrationApp.getException(PrologixTimeoutException.class, e);
+				if(ex!=null) {
+					logger.catching(Level.DEBUG, e);
+					CalibrationApp.showAlert("Timeout.", "Unable to read Power Meter settings.", AlertType.ERROR);
+					powerMeterConnected = false;
+					return;
+				}
+
+				logger.catching(e);
 			}
-
-			logger.catching(e);
-		}
+		});
 	}
 
     private int getTimeout() {
@@ -269,6 +283,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 	@Override
 	public void setAddress() {
 		prologixController.setAddress(address);
+		prologixController.setAuto(AoutoMode.OFF);
 	}
 
 	public boolean isPowerMeterConnected() {

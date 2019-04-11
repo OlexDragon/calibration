@@ -23,8 +23,6 @@ import jssc.SerialPortException;
 public class PrologixWorker {
 	private final static Logger logger = LogManager.getLogger();
 
-	private PrologixCommand  prologixCommand;
-
 	private SerialPort serialPort;
 
 	public synchronized void preset(Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
@@ -106,7 +104,7 @@ public class PrologixWorker {
 		this.serialPort = serialPort;
 	}
 
-	public void send(String value, int timeout, Consumer<byte[]> consumer) {
+	public void send(PrologixCommand prologixCommand, String value, int timeout, Consumer<byte[]> consumer) {
 
 		getSerialPort()
 		.ifPresent(
@@ -135,8 +133,13 @@ public class PrologixWorker {
 													}))
 									.ifNotPresent(
 											catchRunnableException(
-													()->
-													writeThenRead(sc.getCommand(), timeout, consumer))));
+													()->{
+														CommandType commandType = sc.getCommandType();
+														if(commandType==CommandType.SET)
+															write(sc.getCommand());
+														else
+															writeThenRead(sc.getCommand(), timeout, consumer);
+													})));
 						}));
 	}
 
@@ -170,21 +173,5 @@ public class PrologixWorker {
 
 		final SerialPort sp = oSerialPort.get();
 		write(sp, command);
-	}
-
-	public void setAddress(Integer addr) {
-		getSerialPort().ifPresent(catchConsumerException(sp->write(sp, PrologixCommand.ADDR.getCommand() + " " + addr)));
-	}
-
-	public void enableFontPanel() {
-		getSerialPort().ifPresent(catchConsumerException(sp->write(sp, PrologixCommand.LOC.getCommand())));
-	}
-
-	public void setPrologixCommand(PrologixCommand prologixCommand) {
-		this.prologixCommand = prologixCommand;
-	}
-
-	public PrologixCommand getPrologixCommand() {
-		return prologixCommand;
 	}
 }

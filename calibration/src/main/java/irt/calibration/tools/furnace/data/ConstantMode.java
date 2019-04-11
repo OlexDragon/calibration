@@ -6,7 +6,7 @@ import irt.calibration.tools.CommandType;
 
 public enum ConstantMode implements CommandParameter {
 
-	NONE("", CommandType.GET),
+	GET("", CommandType.GET),
 	TARGET("S", CommandType.SET),
 	HIGH_LIMIT("H", CommandType.SET),
 	LOW_LIMIT("l", CommandType.SET);

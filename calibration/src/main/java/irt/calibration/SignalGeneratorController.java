@@ -1,11 +1,13 @@
 package irt.calibration;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.PrologixController.AoutoMode;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.Tool;
@@ -81,14 +83,15 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 		chbCommandParameter.getSelectionModel().selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
-					enable(nv.getCommandType());
+					CommandType commandType = Optional.ofNullable(nv).map(CommandParameter::getCommandType).orElse(null);
+					enable(commandType);
 				});
 	}
 
     @FXML void onGet() {
     	final SG_SCPICommand command = chbCommand.getSelectionModel().getSelectedItem();
     	try {
-			get(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
+    		get(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
 		} catch (SerialPortException | PrologixTimeoutException e) {
 			logger.catching(e);
 		}
@@ -116,7 +119,15 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 	}
 
 	private void enable(CommandType commandType) {
-    	switch(commandType) {
+
+		if(commandType==null) {
+			btnGet.setDisable(true);
+			btnSet.setDisable(true);
+			tfValue.setDisable(true);
+			return;
+		}
+
+		switch(commandType) {
 		case GET:
 			btnGet.setDisable(false);
 			btnSet.setDisable(true);
@@ -136,13 +147,18 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 
     private void get(SG_SCPICommand scpiCommand, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
     	
-    	String command = scpiCommand.getCommand() + "?";
-		prologixController.sendToolCommand(command , consumer, timeout);
+
+		synchronized (ToolCommand.class) {
+			prologixController.setAuto(AoutoMode.ON);
+			String command = scpiCommand.getCommand() + "?";
+			prologixController.sendToolCommand(command , consumer, timeout);
+		}
 	}
 
     public void set(SG_SCPICommand scpiCommand, CommandParameter parameter, String value) throws SerialPortException, PrologixTimeoutException {
 
 		synchronized (ToolCommand.class) {
+			prologixController.setAuto(AoutoMode.OFF);
 			setAddress();
 			String command = scpiCommand.getCommand() + parameter.toString(value);
 			prologixController.sendToolCommand(command , null, timeout);

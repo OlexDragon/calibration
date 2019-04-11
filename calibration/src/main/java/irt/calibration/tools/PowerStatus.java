@@ -13,7 +13,7 @@ public enum PowerStatus implements CommandParameter{
 
 	OFF	("OFF"	, CommandType.SET),
 	ON	("ON"	, CommandType.SET),
-	NONE(""		, CommandType.GET);
+	GET(""		, CommandType.GET);
 
 	private final String command;
 	private final CommandType commandType;

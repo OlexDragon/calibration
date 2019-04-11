@@ -12,7 +12,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 
-public class CalibrationController {
+public class MainController {
 
     @FXML private BorderPane borderPaneUnit;
     @FXML private TextField tfUnitAddress;
