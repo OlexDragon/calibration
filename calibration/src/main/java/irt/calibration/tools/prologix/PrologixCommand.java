@@ -2,8 +2,9 @@
 package irt.calibration.tools.prologix;
 
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.ToolCommand;
 
-public enum PrologixCommand {
+public enum PrologixCommand implements ToolCommand{
 
 	SEND_TO_INSTRUMENT(""		, CommandType.BOTH, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
 	INSTRUMENT_GET(""			, CommandType.GET, PrologixDeviceType.CONTROLLER	, PrologixCommandDescription.SEND_TO_INSTRUMENT),
@@ -138,5 +139,10 @@ public enum PrologixCommand {
 	@Override
 	public String toString() {
 		return name();
+	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
 	}
 }

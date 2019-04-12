@@ -7,9 +7,10 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.PrologixController.AoutoMode;
+import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.furnace.data.CommandParameter;
@@ -113,10 +114,10 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 
     }
 
-	@Override
-	public void setAddress() {
-		prologixController.setAddress(address);
-	}
+//	@Override
+//	public void setAddress() {
+//		prologixController.setAddress(address);
+//	}
 
 	private void enable(CommandType commandType) {
 
@@ -149,19 +150,20 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
     	
 
 		synchronized (ToolCommand.class) {
-			prologixController.setAuto(AoutoMode.ON);
+			prologixController.setAddress(address);
+			prologixController.setAuto(AutoMode.ON);
 			String command = scpiCommand.getCommand() + "?";
-			prologixController.sendToolCommand(command , consumer, timeout);
+			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.GET) , consumer, timeout);
 		}
 	}
 
     public void set(SG_SCPICommand scpiCommand, CommandParameter parameter, String value) throws SerialPortException, PrologixTimeoutException {
 
 		synchronized (ToolCommand.class) {
-			prologixController.setAuto(AoutoMode.OFF);
-			setAddress();
+			prologixController.setAuto(AutoMode.OFF);
+			prologixController.setAddress(address);
 			String command = scpiCommand.getCommand() + parameter.toString(value);
-			prologixController.sendToolCommand(command , null, timeout);
+			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.SET) , null, timeout);
 		}
 	}
 }

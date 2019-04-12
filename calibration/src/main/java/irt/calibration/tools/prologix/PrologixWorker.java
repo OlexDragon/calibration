@@ -16,6 +16,7 @@ import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.SerialPortWorker;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.Eos;
+import irt.calibration.tools.ToolCommand;
 import javafx.scene.control.Alert.AlertType;
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -77,7 +78,7 @@ public class PrologixWorker {
 							bb.position(0);
 							bb.get(bytes, 0, position);
 							consumer.accept(bytes);
-							logger.debug("elapsedTime={}; timeout={};", System.currentTimeMillis()-start, timeout);
+							logger.debug("elapsedTime={}; timeout={}; bytes={}", System.currentTimeMillis()-start, timeout, bytes);
 							return;
 						}
 					}
@@ -104,14 +105,14 @@ public class PrologixWorker {
 		this.serialPort = serialPort;
 	}
 
-	public void send(PrologixCommand prologixCommand, String value, int timeout, Consumer<byte[]> consumer) {
+	public void send(ToolCommand toolCommand, String value, int timeout, Consumer<byte[]> consumer) {
 
 		getSerialPort()
 		.ifPresent(
 				catchConsumerException(
 						sp->{
 
-							Optional.ofNullable(prologixCommand)
+							Optional.ofNullable(toolCommand)
 							.ifPresent(
 									sc->
 									of(

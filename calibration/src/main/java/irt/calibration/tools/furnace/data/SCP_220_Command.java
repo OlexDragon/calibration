@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
+import irt.calibration.tools.ToolCommand;
 
 public enum SCP_220_Command implements CommandWithParameter {
 
@@ -83,11 +84,27 @@ public enum SCP_220_Command implements CommandWithParameter {
 		return getValuesOf(parameterClass);
 	}
 
-	public String commandGet() {
-		return command + "?";
+	public ToolCommand commandGet() {
+		return new ToolCommand() {
+			
+			@Override
+			public CommandType getCommandType() {
+				return CommandType.GET;
+			}
+			
+			@Override
+			public String getCommand() {
+				return command + "?";
+			}
+
+			@Override
+			public Object bytesToObject(byte[] bytes) {
+				return new String(bytes);
+			}
+		};
 	}
 
-	public String commandSet(CommandParameter settingData, String value) {
+	public ToolCommand commandSet(CommandParameter settingData, String value) {
 
 		Optional.ofNullable(settingData)
 		.filter(sd->settingData!=null)
@@ -95,6 +112,27 @@ public enum SCP_220_Command implements CommandWithParameter {
 		.filter(c->c.equals(parameterClass))
 		.orElseThrow(()->new InvalidParameterException());
 
-		return command + "," + settingData.toString(value);
+		return new ToolCommand() {
+			
+			@Override
+			public CommandType getCommandType() {
+				return CommandType.SET;
+			}
+			
+			@Override
+			public String getCommand() {
+				return command + "," + settingData.toString(value);
+			}
+
+			@Override
+			public Object bytesToObject(byte[] bytes) {
+				return new String(bytes);
+			}
+		};
+	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
 	}
 }

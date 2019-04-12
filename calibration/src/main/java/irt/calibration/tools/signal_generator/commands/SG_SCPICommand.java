@@ -45,4 +45,9 @@ public enum SG_SCPICommand implements CommandWithParameter {
 	public Optional<CommandParameter[]> getParameterValues() {
 		return getValuesOf(parameterClass);
 	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

@@ -1,18 +1,17 @@
 package irt.calibration;
 
 import static irt.calibration.exception.ExceptionWrapper.catchConsumerException;
+import static irt.calibration.helpers.OptionalIfElse.of;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.PrologixController.AoutoMode;
+import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.ThreadWorker;
@@ -21,7 +20,6 @@ import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.power_meter.PM_Language;
 import irt.calibration.tools.power_meter.PM_Model;
-import irt.calibration.tools.power_meter.PowerMeterWorker;
 import irt.calibration.tools.power_meter.commands.HP437_Command;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -29,13 +27,13 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import jssc.SerialPortException;
 
@@ -58,7 +56,6 @@ public class PowerMeterController extends AnchorPane implements Tool{
     @FXML private Button					 btbAverage;
 
 	private final PrologixController prologixController;
-	private final PowerMeterWorker powerMeterWorker;
 
 	private Integer address;
 	private Integer timeout;
@@ -68,8 +65,6 @@ public class PowerMeterController extends AnchorPane implements Tool{
 	public PowerMeterController(PrologixController prologixController) {
 
 		this.prologixController = prologixController;
-
-		powerMeterWorker = new PowerMeterWorker(prologixController);
 
 		try {
 
@@ -99,10 +94,14 @@ public class PowerMeterController extends AnchorPane implements Tool{
     	ThreadWorker.runThread(()->{
     		try {
     			synchronized (ToolCommand.class) {
-    				sendCommand();
+    				sendCommand(null);
     			}
     		} catch (Exception e) {
-    			logger.catching(e);
+
+				if(prologixTimeoutException(e))
+						return;
+
+				logger.catching(e);
     		}
     	});
     }
@@ -120,21 +119,22 @@ public class PowerMeterController extends AnchorPane implements Tool{
 			synchronized (ToolCommand.class) {
 				for(int i=0; i<100; i++) {
 					try {
-						powerMeterWorker.getValue(getTimeout(),
+						getValue(timeout,
 								bytes->{
-									logger.error("{} : {}", new String(bytes).trim(), bytes);
+
 									Optional.ofNullable(bytes).filter(b->b.length>0)
 									.ifPresent(
 											b->{
-												synchronized (average) {
-													average.addValue(bytesToDouble(bytes));
-												}
-												Platform.runLater(()->{
-													final String text = taPMAnswers.getText();
+												ThreadWorker.runThread(()->{
 													synchronized (average) {
-														final double averageValue = average.getAverageValue();
-														taPMAnswers.setText(text + "\naverage=" + averageValue + "; " + average);
+														average.addValue((Number) HP437_Command.DEFAULT_READ.bytesToObject(bytes));
 													}
+													Platform.runLater(()->{
+														synchronized (average) {
+															final double averageValue = average.getAverageValue();
+															taPMAnswers.appendText( "\naverage=" + averageValue + "; " + average);
+														}
+													});
 												});
 											});
 								});
@@ -150,13 +150,19 @@ public class PowerMeterController extends AnchorPane implements Tool{
 
     @FXML
     void onLanguage() throws SerialPortException, PrologixTimeoutException {
-		synchronized (ToolCommand.class) {
-			powerMeterWorker.get(PM_Language.getToolCommand(null), getTimeout(), bytes->{
+
+    	synchronized (ToolCommand.class) {
+
+			final ToolCommand toolCommand = PM_Language.getToolCommand(null);
+
+			final Consumer<byte[]> consumer = bytes->{
 				final String value = new String(bytes).trim();
 				taPMAnswers.setText(value);
 				PM_Language language = PM_Language.valueOf(value);
 				chbPMLanguage.getSelectionModel().select(language);
-			});
+			};
+
+			sendCommand(toolCommand, timeout, consumer);
 		}
     }
 
@@ -175,28 +181,31 @@ public class PowerMeterController extends AnchorPane implements Tool{
 		selectionModel.selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
-					nv.getPowerMeterCommands()
+					of(nv.getPowerMeterCommands().filter(cs->cs.length>0))
 					.ifPresent(
 							commands->{
-
-								// Disable Buttons
+								// Disable Button and text field
 								btnSend.setDisable(true);
 								tfPMValue.setDisable(true);
-								chbPMCommand.setDisable(!nv.getPowerMeterCommands().isPresent());
+								chbPMCommand.setDisable(false);
 
 								ObservableList<ToolCommand> items = FXCollections.observableArrayList(commands);
 								chbPMCommand.setItems(items);
 								chbPMCommand.getSelectionModel().select(HP437_Command.DEFAULT_READ);
-							});
+							})
+					.ifNotPresent(()->{
+						btnSend.setDisable(true);
+						tfPMValue.setDisable(true);
+						chbPMCommand.setDisable(true);
+					});
 					if(powerMeterConnected)
-					synchronized (ToolCommand.class) {
 						try {
-							setAddress();
-							prologixController.sendToolCommand(PM_Language.getToolCommand(nv).getCommand(), null, 1000);
+							final ToolCommand toolCommand = PM_Language.getToolCommand(nv);
+							logger.debug(toolCommand);
+							sendCommand(toolCommand, timeout, null);
 						} catch (SerialPortException | PrologixTimeoutException e) {
 							logger.catching(e);
 						}
-					}
 				});
 		selectionModel.select(0);
 
@@ -212,81 +221,78 @@ public class PowerMeterController extends AnchorPane implements Tool{
 		.ifPresent(languages->{
 
 			try {
-				prologixController.sendToolCommand(PM_Language.getToolCommand(null).getCommand(),
-								bytes->{
-									try {
+				final Consumer<byte[]> consumer = bytes->{
+					try {
 
-										String name = new String(bytes).trim();
-										logger.error(name);
-										final PM_Language language = PM_Language.valueOf(name);
-										selectionModel.select(language);
+						String name = new String(bytes).trim();
+						final PM_Language language = PM_Language.valueOf(name);
+						selectionModel.select(language);
 
-									} catch (Exception e) {
-										logger.catching(Level.ERROR, e);
-									}
-								}, getTimeout());
+					} catch (Exception e) {
+						logger.catching(Level.ERROR, e);
+					}
+				};
+				sendCommand(PM_Language.getToolCommand(null), timeout, consumer);
 				powerMeterConnected = true;
 			} catch (Exception e) {
 
-				PrologixTimeoutException ex = CalibrationApp.getException(PrologixTimeoutException.class, e);
-				if(ex!=null) {
-					logger.catching(Level.DEBUG, e);
-					CalibrationApp.showAlert("Timeout.", "Unable to read Power Meter settings.", AlertType.ERROR);
-					powerMeterConnected = false;
-					return;
-				}
+				if(prologixTimeoutException(e))
+						return;
 
 				logger.catching(e);
 			}
 		});
 	}
 
-    private int getTimeout() {
-		return Optional.ofNullable(timeout).orElse(DEFAULT_TIMEOUT);
+	public boolean prologixTimeoutException(Exception e) {
+		PrologixTimeoutException ex = CalibrationApp.getException(PrologixTimeoutException.class, e);
+
+		if(ex==null) 
+			return false;
+
+		logger.catching(Level.DEBUG, e);
+		CalibrationApp.showAlert("Timeout.", "Unable to read Power Meter data.", AlertType.ERROR);
+		powerMeterConnected = false;
+		return true;
 	}
 
-	private double bytesToDouble(byte[] bytes) {
-
-		final int index = IntStream.range(0, bytes.length).filter(b->bytes[b]==(byte)10).findAny().orElse(-1) + 1;
-
-		byte[] b;
-		if(index>0 && index<bytes.length)
-			b = Arrays.copyOfRange(bytes, 0, index);
-		else
-			b = bytes;
-
-		final String trim = new String(b).trim();
-
-		if(trim.isEmpty())
-			return Double.NaN;
-
-		return Double.parseDouble(trim);
-	}
-
-    private void sendCommand() {
-		get(bytes->Platform.runLater(()->taPMAnswers.setText(taPMAnswers.getText() + "\n" + bytesToDouble(bytes))));
-	}
-
-	public void get(Consumer<byte[]> consumer) {
+	public void sendCommand(Consumer<byte[]> consumer) {
 		Optional.ofNullable(chbPMCommand.getSelectionModel().getSelectedItem())
 		.ifPresent(
 				catchConsumerException(
 				command->{
-
 					synchronized (ToolCommand.class) {
-						setAddress();
-						powerMeterWorker.get(command, getTimeout(), consumer);
+						taPMAnswers.appendText( "\n" + command + " : ");
+						sendCommand(command, timeout, getConsumer(command, consumer));
 					}
 				}));
 	}
 
-	@Override
-	public void setAddress() {
-		prologixController.setAddress(address);
-		prologixController.setAuto(AoutoMode.OFF);
+private Consumer<byte[]> getConsumer(ToolCommand command, Consumer<byte[]> consumer) {
+		return bytes->{
+			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
+			final Object object = command.bytesToObject(bytes);
+			taPMAnswers.appendText(object.toString());
+		};
 	}
+
+//	@Override
+//	public void setAddress() {
+//	}
 
 	public boolean isPowerMeterConnected() {
 		return powerMeterConnected;
+	}
+
+	public void sendCommand(ToolCommand command, int timeout, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
+		synchronized (PrologixController.class) {
+			prologixController.setAddress(address);
+			prologixController.setAuto(command.getCommandType()!=CommandType.SET ? AutoMode.ON : AutoMode.OFF);
+			prologixController.sendToolCommand(command, consumer, timeout);
+		}
+	}
+
+	public void getValue(int timeout, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
+		sendCommand(HP437_Command.DEFAULT_READ, timeout, consumer);
 	}
 }

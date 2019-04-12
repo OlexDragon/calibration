@@ -33,4 +33,9 @@ public enum ConstantMode implements CommandParameter {
 	public String toString(String value) {
 		return Optional.ofNullable(value).map(v->command + v.trim()).orElse(command);
 	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

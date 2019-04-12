@@ -77,4 +77,9 @@ public enum FrequencyUnit implements CommandParameter{
 	public static String toString(double value, FrequencyUnit frequencyUnit) {
 		return formatter.format(value) + " " + frequencyUnit;
 	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

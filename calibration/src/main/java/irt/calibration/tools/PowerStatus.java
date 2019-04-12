@@ -42,4 +42,9 @@ public enum PowerStatus implements CommandParameter{
 //	public String toString() {
 //		return name();
 //	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

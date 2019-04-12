@@ -8,15 +8,17 @@ import java.util.prefs.Preferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import irt.calibration.PrologixController.AoutoMode;
+import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.Tool;
+import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.furnace.FurnaceWorker;
 import irt.calibration.tools.furnace.Temperature;
+import irt.calibration.tools.furnace.data.CommandParameter;
 import irt.calibration.tools.furnace.data.ConstantMode;
 import irt.calibration.tools.furnace.data.SCP_220_Command;
-import irt.calibration.tools.furnace.data.CommandParameter;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -136,14 +138,18 @@ public class FurnaceController extends AnchorPane implements Tool{
 	@FXML void onGet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
-		String commandGet = selectedCommand.commandGet();
+		ToolCommand commandGet = selectedCommand.commandGet();
 
 		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
 		final String data = selectedData.toString(null);
-		if(data!=null && !data.isEmpty())
-			commandGet += data;
 
-		sendCommand(commandGet,  bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes)));
+		final ToolCommand command;
+		if(data!=null && !data.isEmpty())
+			command = new SimpleToolCommand(commandGet.getCommand()+data, commandGet.getCommandType());
+		else
+			command = new SimpleToolCommand(commandGet.getCommand(), commandGet.getCommandType());
+
+		sendCommand(command,  bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes)));
 	}
 
     @FXML  void onSet() throws SerialPortException, PrologixTimeoutException {
@@ -153,7 +159,7 @@ public class FurnaceController extends AnchorPane implements Tool{
 		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
 		final String value = tfValue.getText().trim();
 
-		String commandSet = selectedCommand.commandSet(selectedData, value);
+		ToolCommand commandSet = selectedCommand.commandSet(selectedData, value);
 
 		sendCommand(commandSet);
     }
@@ -162,22 +168,17 @@ public class FurnaceController extends AnchorPane implements Tool{
 
     }
 
-	private void sendCommand(String command) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(command, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
+	private void sendCommand(ToolCommand toolCommand) throws SerialPortException, PrologixTimeoutException {
+		sendCommand(toolCommand, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
 	}
 
-	private void sendCommand(String command, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
-		logger.error(command);
+	private void sendCommand(ToolCommand toolCommand, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
+		logger.error(toolCommand);
 		synchronized (PrologixController.class) {
 
-			prologixController.setAuto(AoutoMode.ON);
+			prologixController.setAuto(AutoMode.ON);
 			prologixController.setAddress(address);
-			prologixController.sendToolCommand(command, consumer, timeout);
+			prologixController.sendToolCommand(toolCommand, consumer, timeout);
 		}
-	}
-
-	@Override
-	public void setAddress() {
-		prologixController.setAddress(address);
 	}
 }

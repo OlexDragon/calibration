@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.SerialPortWorker;
 import irt.calibration.helpers.StageSizeAndPosition;
 import javafx.application.Application;
@@ -136,9 +137,18 @@ public class CalibrationApp extends Application {
     	if(numberFormatException != null) {
 
     		logger.catching(Level.DEBUG, throwable);
-			showAlert("Unit Address Error", "Error in the address field", AlertType.ERROR);
+			showAlert("Number Format Exception", "Error in the text field", AlertType.ERROR);
     		return;
     	}
+
+    	final PrologixTimeoutException prologixTimeoutException = getException(PrologixTimeoutException.class, throwable);
+    	if(prologixTimeoutException != null) {
+
+    		logger.catching(Level.DEBUG, throwable);
+			showAlert("Timeout Exception", "Timeout Exception", AlertType.ERROR);
+    		return;
+    	}
+
     	logger.error(thread);
     	logger.catching(throwable);
     };
