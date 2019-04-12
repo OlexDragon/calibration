@@ -11,7 +11,7 @@ import javafx.scene.control.TextInputControl;
 
 public interface Tool {
 
-	void setAddress();
+//	void setAddress();
 
 	static Preferences prefs = Preferences.userNodeForPackage(Tool.class);
 

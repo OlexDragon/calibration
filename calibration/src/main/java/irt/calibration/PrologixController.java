@@ -14,7 +14,9 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.SerialPortWorker;
+import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.Tool;
+import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.prologix.PrologixCommand;
 import irt.calibration.tools.prologix.PrologixWorker;
 import javafx.beans.value.ChangeListener;
@@ -157,10 +159,7 @@ public class PrologixController extends AnchorPane {
 		taPrologixAnswers.setText(prologixCommand.getDescription());
 	}
 
-	private final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yy HH:mm:SS -> ");
-
 	private Integer address;
-
 	public void setAddress(Integer addr) {
 
 		if(address!=null && address.equals(addr))
@@ -170,9 +169,20 @@ public class PrologixController extends AnchorPane {
 		send(PrologixCommand.ADDR, Optional.ofNullable(addr).map(i->i.toString()).orElse(null), timeout, getConsumer(null));
 	}
 
-	private void writeToTextArea(PrologixCommand command, String value) {
+	private AutoMode autoMode;
+	public void setAuto(AutoMode autoMode) {
+
+		if(this.autoMode!=null && this.autoMode.equals(autoMode))
+			return;
+
+		this.autoMode = autoMode;
+		send(PrologixCommand.AUTO ,Integer.toString(autoMode.ordinal()), timeout, getConsumer(null));
+	}
+
+	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yy HH:mm:SS -> ");
+	private void writeToTextArea(ToolCommand command, String value) {
 		Date date = new Date();
-		taPrologixAnswers.setText(taPrologixAnswers.getText() + '\n' + DATE_FORMAT.format(date) + command +  ": " + value);
+		taPrologixAnswers.appendText( '\n' + DATE_FORMAT.format(date) + command +  (value==null ? " " : ": " + value));
 	}
 
 	private Consumer<byte[]> getConsumer(Consumer<byte[]> consumer) {
@@ -182,7 +192,7 @@ public class PrologixController extends AnchorPane {
 
 			String answer = new String(bytes);
 			logger.debug("{} : {}", answer, bytes);
-			taPrologixAnswers.setText(taPrologixAnswers.getText() + " = " + answer +'\n');
+			taPrologixAnswers.appendText(" = " + answer +'\n');
 		};
 	}
 
@@ -190,26 +200,16 @@ public class PrologixController extends AnchorPane {
 		send(PrologixCommand.LOC, null, timeout, getConsumer(null));
 	}
 
-	public void sendToolCommand(String toolCommand, Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
-		send(PrologixCommand.SEND_TO_INSTRUMENT, toolCommand, timeout, getConsumer(consumer));
+	public void sendToolCommand(ToolCommand command, Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
+		send(new SimpleToolCommand(command.getCommand(), command.getCommandType()), null, timeout, getConsumer(consumer));
 	}
 
 	public boolean isPrologixConnected() {
 		return Optional.ofNullable(prlogixConnected).orElse(false);
 	}
 
-	private AoutoMode autoMode;
-	public void setAuto(AoutoMode autoMode) {
-
-		if(this.autoMode!=null && this.autoMode.equals(autoMode))
-			return;
-
-		this.autoMode = autoMode;
-		send(PrologixCommand.AUTO ,Integer.toString(autoMode.ordinal()), timeout, getConsumer(null));
-	}
-
-    private void send(PrologixCommand command, String value, Integer timeout, Consumer<byte[]> consumer) {
-		writeToTextArea(command, value==null ? command.getCommandType().toString() : value);
+    private void send(ToolCommand command, String value, Integer timeout, Consumer<byte[]> consumer) {
+		writeToTextArea(command, value);
     	prologixWorker.send(command, value, timeout, consumer);
 	}
 
@@ -217,8 +217,7 @@ public class PrologixController extends AnchorPane {
 		return chbPrologixCommand.getSelectionModel().getSelectedItem();
 	}
 
-	public enum AoutoMode {
-
+	public enum AutoMode {
 		OFF,
 		ON
 	}

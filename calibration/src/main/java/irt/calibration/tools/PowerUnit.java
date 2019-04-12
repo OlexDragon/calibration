@@ -44,4 +44,9 @@ public enum PowerUnit implements CommandParameter{
 	public static String toString(double value, PowerUnit frequencyUnit) {
 		return formatter.format(value) + " " + frequencyUnit;
 	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

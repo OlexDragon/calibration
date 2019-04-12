@@ -46,4 +46,9 @@ public enum RefrigerationCapacity implements CommandParameter{
 	public CommandType getCommandType() {
 		return commandType;
 	}
+
+	@Override
+	public Object bytesToObject(byte[] bytes) {
+		return new String(bytes);
+	}
 }

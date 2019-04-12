@@ -61,8 +61,8 @@ public class MainController {
 
 	public EventHandler<Event> onTabSelected(final Tool controller) {
 		return e->{
-			if(((Tab)e.getSource()).isSelected())
-				controller.setAddress();
+//			if(((Tab)e.getSource()).isSelected())
+//				controller.setAddress();
 		};
 	}
 }
