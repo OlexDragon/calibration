@@ -75,7 +75,6 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 		chbCommand.getSelectionModel().selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
-					logger.error("{} : {}", nv.getParameterClass(), nv.getParameterValues());
 					nv.getParameterValues()
 					.map(pv->FXCollections.observableArrayList(pv))
 					.ifPresent(chbCommandParameter::setItems);
@@ -153,7 +152,7 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 			prologixController.setAddress(address);
 			prologixController.setAuto(AutoMode.ON);
 			String command = scpiCommand.getCommand() + "?";
-			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.GET) , consumer, timeout);
+			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.GET, scpiCommand.getAnswerConverter()) , consumer, timeout);
 		}
 	}
 
@@ -163,7 +162,7 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 			prologixController.setAuto(AutoMode.OFF);
 			prologixController.setAddress(address);
 			String command = scpiCommand.getCommand() + parameter.toString(value);
-			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.SET) , null, timeout);
+			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.SET, scpiCommand.getAnswerConverter()) , null, timeout);
 		}
 	}
 }

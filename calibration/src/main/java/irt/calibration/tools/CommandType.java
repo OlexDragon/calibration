@@ -3,13 +3,26 @@ package irt.calibration.tools;
 public enum CommandType {
 	GET,
 	SET,
-	BOTH;
+	BOTH,
+	SET_WITH_ANSWER;
 
-	public boolean match(CommandType commandType) {
+	public static boolean isSetCommand(CommandType commandType) {
 
-		if(commandType==BOTH)
+		switch(commandType) {
+		case GET:
+			return false;
+		default:
 			return true;
+		}
+	}
 
-		return this==commandType;
+	public static boolean waitForAnswer(CommandType commandType) {
+
+		switch(commandType) {
+		case SET:
+			return false;
+		default:
+			return true;
+		}
 	}
 }

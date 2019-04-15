@@ -8,6 +8,7 @@
    <children>
       <TabPane fx:id="tabPaneCalibration" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <tabs>
+          <Tab fx:id="tabCalibration" text="Calibration" />
           <Tab fx:id="tabFurnace" text="Furnace" />
           <Tab fx:id="tabSignalGenerator" text="Signal Generator" />
           <Tab fx:id="tabPowerMeter" text="Power Meter" />

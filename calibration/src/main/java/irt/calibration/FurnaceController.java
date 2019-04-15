@@ -1,8 +1,10 @@
 package irt.calibration;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,19 +13,21 @@ import org.apache.logging.log4j.Logger;
 import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
-import irt.calibration.tools.SimpleToolCommand;
+import irt.calibration.tools.CommandWithParameter;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
-import irt.calibration.tools.furnace.FurnaceWorker;
-import irt.calibration.tools.furnace.Temperature;
 import irt.calibration.tools.furnace.data.CommandParameter;
+import irt.calibration.tools.furnace.data.CommandParameter.NeedValue;
 import irt.calibration.tools.furnace.data.ConstantMode;
 import irt.calibration.tools.furnace.data.SCP_220_Command;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -96,89 +100,104 @@ public class FurnaceController extends AnchorPane implements Tool{
 		chbCommandParameter.getSelectionModel().selectedItemProperty()
 		.addListener(
 				(o,ov,nv)->{
-					final CommandType commandType = nv.getCommandType();
-					switch(commandType) {
-
-					case GET:
-						btnGet.setDisable(false);
-						btnSet.setDisable(true);
-						tfValue.setDisable(true);
-						break;
-
-					case SET:
-						btnGet.setDisable(true);
-						btnSet.setDisable(false);
-						tfValue.setDisable(false);
-						break;
-
-					default:
-						btnGet.setDisable(false);
-						btnSet.setDisable(false);
-						tfValue.setDisable(false);
-					
-					}
+					tfValue.setText("");
+					Optional.ofNullable(nv)
+					.ifPresent(this::disableNodesd);
 				});
+		tfValue.textProperty().addListener((o,ov,nv)->btnSet.setDisable(nv.isEmpty()));
 
-		new FurnaceWorker(chbCommand, chbCommandParameter);
+		ObservableList<SCP_220_Command> value = FXCollections.observableArrayList(SCP_220_Command.values()).sorted((a,b)->a.toString().compareTo(b.toString()));
+		chbCommand.setItems(value);
+
+		final SingleSelectionModel<SCP_220_Command> selectionModel = chbCommand.getSelectionModel();
+		selectionModel.selectedItemProperty()
+		.addListener(
+				(o,ov,nv)->nv.getParameterValues()
+						.ifPresent(
+								commands->{
+									ObservableList<CommandParameter> v = FXCollections.observableArrayList(commands);
+									chbCommandParameter.setItems(v);
+									chbCommandParameter.getSelectionModel().select(0);
+								})
+				);
+		selectionModel.select(0);
+	}
+
+	private void disableNodesd(CommandParameter commandParameter) {
+
+		final CommandType commandType = commandParameter.getCommandType();
+
+		btnGet.setDisable(commandType==CommandType.SET_WITH_ANSWER);
+		tfValue.setText("");
+
+		switch(commandType) {
+
+		case GET:
+			btnSet.setDisable(true);
+			tfValue.setDisable(true);
+			break;
+
+		default:
+			NeedValue needValue = commandParameter.getNeedValue();
+			tfValue.setDisable(needValue==NeedValue.NO);
+			btnSet.setDisable(needValue!=NeedValue.NO);
+		}
 	}
 
     @FXML void onGetTemperature() throws SerialPortException, PrologixTimeoutException {
-		final Consumer<byte[]> consumer = bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes));
-    	getTemperature(consumer);
+    	getTemperature(null);
     }
 
 	public void getTemperature(final Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(SCP_220_Command.TEMP.commandGet(),  consumer);
+		sendCommand(SCP_220_Command.TEMP,  ConstantMode.GET, null, consumer);
 	}
 
 	public void setTemperature(double target, final Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(SCP_220_Command.TEMP.commandSet(ConstantMode.TARGET, Double.toString(target)),  consumer);
+		sendCommand(SCP_220_Command.TEMP,  ConstantMode.TARGET, tfValue.getText(), consumer);
 	}
 
 	@FXML void onGet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
-		ToolCommand commandGet = selectedCommand.commandGet();
+		final CommandParameter selectedParameter = chbCommandParameter.getSelectionModel().getSelectedItem();
+		final String value = tfValue.getText();
 
-		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
-		final String data = selectedData.toString(null);
-
-		final ToolCommand command;
-		if(data!=null && !data.isEmpty())
-			command = new SimpleToolCommand(commandGet.getCommand()+data, commandGet.getCommandType());
-		else
-			command = new SimpleToolCommand(commandGet.getCommand(), commandGet.getCommandType());
-
-		sendCommand(command,  bytes->taAnswers.setText(taAnswers.getText() + "\n" + new Temperature(bytes)));
+		sendCommand(selectedCommand,  selectedParameter, value, null);
 	}
 
     @FXML  void onSet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
-
-		final CommandParameter selectedData = chbCommandParameter.getSelectionModel().getSelectedItem();
+		final CommandParameter selectedParameter = chbCommandParameter.getSelectionModel().getSelectedItem();
 		final String value = tfValue.getText().trim();
 
-		ToolCommand commandSet = selectedCommand.commandSet(selectedData, value);
-
-		sendCommand(commandSet);
+		sendCommand(selectedCommand, selectedParameter, value, null);
     }
 
     @FXML void onWrapText() {
 
     }
 
-	private void sendCommand(ToolCommand toolCommand) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(toolCommand, bytes->taAnswers.setText(taAnswers.getText() + "\n" + new String(bytes)));
-	}
-
-	private void sendCommand(ToolCommand toolCommand, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
-		logger.error(toolCommand);
+	private void sendCommand(CommandWithParameter toolCommand, CommandParameter commandParameter, String value, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
 		synchronized (PrologixController.class) {
 
+			ToolCommand command = toolCommand.getCommand(commandParameter, value);
+			Date date = new Date();
+			PrologixController.DATE_FORMAT.format(date);
+			
+			String text = PrologixController.DATE_FORMAT.format(date) +command.getCommand();
+			taAnswers.appendText(text);
 			prologixController.setAuto(AutoMode.ON);
 			prologixController.setAddress(address);
-			prologixController.sendToolCommand(toolCommand, consumer, timeout);
+			prologixController.sendToolCommand(command, getConsumer(command.getAnswerConverter(), consumer), timeout);
 		}
+	}
+
+	private Consumer<byte[]> getConsumer(Function<byte[], Object> converter, Consumer<byte[]> consumer) {
+		return bytes->{
+
+			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
+			taAnswers.appendText(" = " + converter.apply(bytes).toString());
+		};
 	}
 }
