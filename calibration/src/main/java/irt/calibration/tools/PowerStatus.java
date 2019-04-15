@@ -1,8 +1,8 @@
 package irt.calibration.tools;
 
 import java.util.Optional;
+import java.util.function.Function;
 
-import irt.calibration.tools.CommandType;
 import irt.calibration.tools.furnace.data.CommandParameter;
 
 /**
@@ -35,7 +35,7 @@ public enum PowerStatus implements CommandParameter{
 
 	@Override
 	public String toString(String value) {
-		return Optional.of(commandType).filter(ct->ct.match(CommandType.SET)).map(ct->' ' + command).orElse("");
+		return Optional.of(commandType).filter(ct->CommandType.isSetCommand(ct)).map(ct->' ' + command).orElse("");
 	}
 //
 //	@Override
@@ -44,7 +44,13 @@ public enum PowerStatus implements CommandParameter{
 //	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NeedValue getNeedValue() {
+		return NeedValue.NO;
 	}
 }

@@ -1,5 +1,7 @@
 package irt.calibration.tools.furnace.data;
 
+import java.util.function.Function;
+
 import irt.calibration.tools.CommandType;
 
 /**
@@ -48,7 +50,14 @@ public enum RefrigerationCapacity implements CommandParameter{
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NeedValue getNeedValue() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

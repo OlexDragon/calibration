@@ -70,7 +70,7 @@ public enum FrequencyUnit implements CommandParameter{
 
 	@Override
 	public String toString(String value) {
-		return Optional.of(commandType).filter(ct->ct.match(CommandType.SET)).map(ct->' ' + value + ' ' + command).orElse("");
+		return Optional.of(commandType).filter(ct->CommandType.isSetCommand(ct)).map(ct->' ' + value + ' ' + command).orElse("");
 	}
 
 	private final static NumberFormat formatter = new DecimalFormat("#0.#########");     
@@ -79,7 +79,13 @@ public enum FrequencyUnit implements CommandParameter{
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NeedValue getNeedValue() {
+		return NeedValue.YES;
 	}
 }

@@ -1,29 +1,29 @@
 package irt.calibration.tools.signal_generator.commands;
 
-import static irt.calibration.tools.CommandWithParameter.getValuesOf;
-
 import java.util.Optional;
+import java.util.function.Function;
 
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
 import irt.calibration.tools.FrequencyUnit;
 import irt.calibration.tools.PowerStatus;
 import irt.calibration.tools.PowerUnit;
+import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.furnace.data.CommandParameter;
 
 public enum SG_SCPICommand implements CommandWithParameter {
 
-	OUTPUT	("OUTP:STAT", PowerStatus.class, CommandType.BOTH),
-	POWER	("POW:AMPL", PowerUnit.class, CommandType.BOTH),
-	FREQUENCY("FREQ:CW", FrequencyUnit.class, CommandType.BOTH);
+	OUTPUT	("OUTP:STAT", CommandType.BOTH, PowerStatus.values()),
+	POWER	("POW:AMPL", CommandType.BOTH, PowerUnit.values()),
+	FREQUENCY("FREQ:CW", CommandType.BOTH, FrequencyUnit.values());
 
 	private final String command;
 	private final CommandType commandType;
-	private final Class<? extends CommandParameter> parameterClass;
+	private final CommandParameter[] parameters;
 
-	private SG_SCPICommand(String command, Class<? extends CommandParameter> parameterClass, CommandType commandType) {
+	private SG_SCPICommand(String command, CommandType commandType, CommandParameter... parameters) {
 		this.command = command;
-		this.parameterClass = parameterClass;
+		this.parameters = parameters;
 		this.commandType = commandType;
 	}
 
@@ -37,17 +37,20 @@ public enum SG_SCPICommand implements CommandWithParameter {
 		return commandType;
 	}
 
-	public Class<? extends CommandParameter> getParameterClass() {
-		return parameterClass;
-	}
-
 	@Override
 	public Optional<CommandParameter[]> getParameterValues() {
-		return getValuesOf(parameterClass);
+		return Optional.of(parameters).filter(ps->ps.length>0);
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ToolCommand getCommand(CommandParameter commandParameter, String value) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -71,6 +71,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
+					<annotationProcessors>
+						<proc>irt.calibration.backgroumd.processors.PropertiesProcessor</proc>
+					</annotationProcessors>
 					<source>1.8</source>
 					<target>1.8</target>
 					<compilerArguments>

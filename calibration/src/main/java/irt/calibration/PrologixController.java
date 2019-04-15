@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.SerialPortWorker;
-import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.prologix.PrologixCommand;
@@ -179,10 +178,10 @@ public class PrologixController extends AnchorPane {
 		send(PrologixCommand.AUTO ,Integer.toString(autoMode.ordinal()), timeout, getConsumer(null));
 	}
 
-	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yy HH:mm:SS -> ");
+	public final static DateFormat DATE_FORMAT = new SimpleDateFormat("\ndd.MM.yy HH:mm:SS -> ");
 	private void writeToTextArea(ToolCommand command, String value) {
 		Date date = new Date();
-		taPrologixAnswers.appendText( '\n' + DATE_FORMAT.format(date) + command +  (value==null ? " " : ": " + value));
+		taPrologixAnswers.appendText( DATE_FORMAT.format(date) + command +  (value==null ? " " : ": " + value));
 	}
 
 	private Consumer<byte[]> getConsumer(Consumer<byte[]> consumer) {
@@ -192,7 +191,7 @@ public class PrologixController extends AnchorPane {
 
 			String answer = new String(bytes);
 			logger.debug("{} : {}", answer, bytes);
-			taPrologixAnswers.appendText(" = " + answer +'\n');
+			taPrologixAnswers.appendText(" = " + answer);
 		};
 	}
 
@@ -201,7 +200,7 @@ public class PrologixController extends AnchorPane {
 	}
 
 	public void sendToolCommand(ToolCommand command, Consumer<byte[]> consumer, int timeout) throws SerialPortException, PrologixTimeoutException {
-		send(new SimpleToolCommand(command.getCommand(), command.getCommandType()), null, timeout, getConsumer(consumer));
+		send(command, null, timeout, getConsumer(consumer));
 	}
 
 	public boolean isPrologixConnected() {

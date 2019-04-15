@@ -1,8 +1,10 @@
 package irt.calibration.tools;
 
+import java.util.function.Function;
+
 public interface ToolCommand {
 
 	String getCommand();
 	CommandType getCommandType();
-	Object bytesToObject(byte[] bytes);
+	Function<byte[], Object> getAnswerConverter();
 }

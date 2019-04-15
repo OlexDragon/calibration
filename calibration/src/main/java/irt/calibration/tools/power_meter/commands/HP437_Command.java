@@ -38,11 +38,6 @@ public enum HP437_Command implements ToolCommand {
 		return commandType;
 	}
 
-	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return bytesTo.apply(bytes);
-	}
-
 	public static ToolCommand getId() {
 		return ID;
 	}
@@ -67,5 +62,10 @@ public enum HP437_Command implements ToolCommand {
 			return Double.NaN;
 
 		return Double.parseDouble(trim);
+	}
+
+	@Override
+	public Function<byte[], Object> getAnswerConverter() {
+		return bytesTo;
 	}
 }

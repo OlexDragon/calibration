@@ -119,11 +119,13 @@ public class PrologixWorker {
 											Optional.ofNullable(value)
 											.map(String::trim)
 											.filter(v->!v.isEmpty()))
+
+									// Value Exists
 									.ifPresent(
 											catchConsumerException(
 													v->{
 														final String command = sc.getCommand();
-														if(sc.getCommandType()!=CommandType.SET && command.isEmpty()) {
+														if(CommandType.waitForAnswer(sc.getCommandType()) && command.isEmpty()) {
 															writeThenRead(v, timeout, consumer);
 															return;
 														}
@@ -132,14 +134,16 @@ public class PrologixWorker {
 															write(sp, command + " " + v);
 														}
 													}))
+
+									// No Value
 									.ifNotPresent(
 											catchRunnableException(
 													()->{
 														CommandType commandType = sc.getCommandType();
-														if(commandType==CommandType.SET)
-															write(sc.getCommand());
-														else
+														if(CommandType.waitForAnswer(commandType))
 															writeThenRead(sc.getCommand(), timeout, consumer);
+														else
+															write(sc.getCommand());
 													})));
 						}));
 	}

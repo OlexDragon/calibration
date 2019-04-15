@@ -18,6 +18,7 @@ public class MainController {
     @FXML private TextField tfUnitAddress;
 
     @FXML private TabPane tabPaneCalibration;
+    @FXML private Tab tabCalibration;
     @FXML private Tab tabFurnace;
     @FXML private Tab tabSignalGenerator;
     @FXML private Tab tabPowerMeter;
@@ -38,7 +39,7 @@ public class MainController {
 		// Power Meter
 		final PowerMeterController powerMeterController = new PowerMeterController(prologixController);
     	tabPowerMeter.setContent(powerMeterController);
-    	tabPowerMeter.setOnSelectionChanged(onTabSelected(powerMeterController));
+//    	tabPowerMeter.setOnSelectionChanged(onTabSelected(powerMeterController));
 
     	final boolean powerMeterConnected = powerMeterController.isPowerMeterConnected();
     	if(!powerMeterConnected && selectionModel.getSelectedIndex()==0)
@@ -47,16 +48,20 @@ public class MainController {
     	// Signal Generator
 		final SignalGeneratorController signalGeneratorController = new SignalGeneratorController(prologixController);
 		tabSignalGenerator.setContent(signalGeneratorController);
-		tabSignalGenerator.setOnSelectionChanged(onTabSelected(signalGeneratorController));
+//		tabSignalGenerator.setOnSelectionChanged(onTabSelected(signalGeneratorController));
 
 		// Furnace
 		final FurnaceController furnaceController = new FurnaceController(prologixController);
 		tabFurnace.setContent(furnaceController);
-		tabFurnace.setOnSelectionChanged(onTabSelected(furnaceController));
+//		tabFurnace.setOnSelectionChanged(onTabSelected(furnaceController));
 
 		// Unit (BUC, Converter, ...
 		final UnitController unitDetailsController = new UnitController();
     	tabUnit.setContent(unitDetailsController);
+
+    	// Calibration Panel
+    	CalibrationController calibrationController = new CalibrationController();
+    	tabCalibration.setContent(calibrationController);
     }
 
 	public EventHandler<Event> onTabSelected(final Tool controller) {

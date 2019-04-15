@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root minWidth="483.0" type="AnchorPane" xmlns:fx="http://javafx.com/fxml/1" >
+<fx:root minWidth="483.0" type="AnchorPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.171">
    <children>
       <BorderPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <top>
@@ -24,7 +24,7 @@
                         <ChoiceBox fx:id="chbCommand" />
                         <ChoiceBox fx:id="chbCommandParameter" disable="true" />
                         <Button fx:id="btnGet" disable="true" minWidth="50.0" mnemonicParsing="false" onAction="#onGet" text="Get" />
-                        <TextField fx:id="tfValue" disable="true" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="tfValue" disable="true" maxWidth="1.7976931348623157E308" onAction="#onSet" HBox.hgrow="ALWAYS" />
                         <Button fx:id="btnSet" disable="true" minWidth="50.0" mnemonicParsing="false" onAction="#onSet" text="Set" />
                         <TextField fx:id="tfTimeout" prefColumnCount="4" text="100">
                            <tooltip>

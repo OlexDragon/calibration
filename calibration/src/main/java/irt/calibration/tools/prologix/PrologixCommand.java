@@ -1,6 +1,8 @@
 
 package irt.calibration.tools.prologix;
 
+import java.util.function.Function;
+
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.ToolCommand;
 
@@ -142,7 +144,7 @@ public enum PrologixCommand implements ToolCommand{
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		return String::new;
 	}
 }

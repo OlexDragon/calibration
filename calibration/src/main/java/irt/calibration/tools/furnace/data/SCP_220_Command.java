@@ -1,63 +1,64 @@
 package irt.calibration.tools.furnace.data;
 
-import static irt.calibration.tools.CommandWithParameter.getValuesOf;
-
-import java.security.InvalidParameterException;
 import java.util.Optional;
+import java.util.function.Function;
 
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
+import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.ToolCommand;
 
 public enum SCP_220_Command implements CommandWithParameter {
 
-	LAST_RESULT	(""				, CommandType.GET, null, "The processing result for the last processed command."),
-	ROM			("ROM"			, CommandType.GET, null, "ROM version."),
-	DATE		("DATE"			, CommandType.GET, null, "The date of the internal calendar."),
-	TIME		("TIME"			, CommandType.GET, null, "The present time of the internal clock."),
-	SRQ			("SRQ"			, CommandType.GET, null, "SRQ status."),
-	MASK		("MASK"			, CommandType.GET, null, "The SRQ mask setting."),
-	PRGM_USE	("PRGM USE"		, CommandType.GET, null, "Management information on registered programs."),
-	TIMER_USE	("TIMER USE"	, CommandType.GET, null, "The number of currently used timers."),
-	TIMER_LIST	("TIMER LIST"	, CommandType.GET, null, "Timer setup."),
-	TIMER_ON	("TIMER ON"		, CommandType.GET, null, "The number of active timers."),
-	ALARM		("ALARM"		, CommandType.GET, null, "Alarms that have occurred."),
-	KEYPROTECT	("KEYPROTECT"	, CommandType.GET, null, "Key lock status."),
-	TYPE		("TYPE"			, CommandType.GET, null, "Chamber information."),
-	MODE		("MODE"			, CommandType.GET, null, "Chamber operating mode."),
-	MON			("MON"			, CommandType.GET, null, "Conditions inside the chamber."),
-	TEMP		("TEMP"			, CommandType.BOTH, ConstantMode.class			, "Temperature parameters for the constant mode."),
-	HUMI		("HUMI"			, CommandType.BOTH, ConstantMode.class			, "Humidity parameters for the constant mode."),
-	SET			("SET"			, CommandType.BOTH, RefrigerationCapacity.class	, "Refrigeration capacity control setup."),
-	REF			("REF"			, CommandType.GET, null, "Refrigeration output."),
-	RELAY		("RELAY"		, CommandType.BOTH, PowerStatusFurnace.class, "Constant mode time signal ON/OFF setup."),
-	HEATER_OUTPUT("%"			, CommandType.GET, null, "Heater output."),
-	PRGM_MON	("PRGM MON"		, CommandType.GET, null, "Run status of the current program."),
-	PRGM_SET	("PRGM SET"		, CommandType.GET, null, "Program end mode of the current program."),
-	PRGM_DATA	("PRGM DATA"	, CommandType.GET, null, "Setup of the specified program."),
+	LAST_RESULT	(""				, CommandType.GET	, "The processing result for the last processed command.", null),
+	ROM			("ROM"			, CommandType.GET	, "ROM version.", null),
+	DATE		("DATE"			, CommandType.GET	, "The date of the internal calendar.", null),
+	TIME		("TIME"			, CommandType.GET	, "The present time of the internal clock.", null),
+	SRQ			("SRQ"			, CommandType.GET	, "SRQ status.", null),
+	MASK		("MASK"			, CommandType.GET	, "The SRQ mask setting.", null),
+	PRGM_USE	("PRGM USE"		, CommandType.GET	, "Management information on registered programs.", null),
+	TIMER_USE	("TIMER USE"	, CommandType.GET	, "The number of currently used timers.", null),
+	TIMER_LIST	("TIMER LIST"	, CommandType.GET	, "Timer setup.", null),
+	TIMER_ON	("TIMER ON"		, CommandType.GET	, "The number of active timers.", null),
+	ALARM		("ALARM"		, CommandType.GET	, "Alarms that have occurred.", null),
+	KEYPROTECT	("KEYPROTECT"	, CommandType.GET	, "Key lock status.", null),
+	TYPE		("TYPE"			, CommandType.GET	, "Chamber information.", null),
+	MODE		("MODE"			, CommandType.GET	, "Chamber operating mode.", null),
+	MON			("MON"			, CommandType.GET	, "Conditions inside the chamber.", null),
+	TEMP		("TEMP"			, CommandType.BOTH	, "Temperature parameters for the constant mode.", null, ConstantMode.values()),
+	HUMI		("HUMI"			, CommandType.BOTH	, "Humidity parameters for the constant mode.", null, ConstantMode.values()),
+	SET			("SET"			, CommandType.BOTH	, "Refrigeration capacity control setup.", null, RefrigerationCapacity.values()),
+	REF			("REF"			, CommandType.GET	, "Refrigeration output.", null),
+	RELAY		("RELAY"		, CommandType.BOTH	, "Constant mode time signal ON/OFF setup.", null, PowerStatusFurnace.values()),
+	HEATER_OUTPUT("%"			, CommandType.GET	, "Heater output.", null),
+	PRGM_MON	("PRGM MON"		, CommandType.GET	, "Run status of the current program.", null),
+	PRGM_SET	("PRGM SET"		, CommandType.GET	, "Program end mode of the current program.", null),
+	PRGM_DATA	("PRGM DATA"	, CommandType.GET	, "Setup of the specified program.", null),
 	/*The “program mode” mentioned herein refers to user Program Nos. 1 ~ 20 and ROM
 		Program Nos. 21 ~ 30 which are created, edited, and run from the SCP-220 Instrumentation
 		(ROM programs cannot be edited). The “remote program mode” refers to the 1-step program
 		mode which enables editing, starting, and monitoring via this communication function or EBUS
 		communications. For details on the remote program mode, see “4.3 To Run Programs
 		from Remote”.*/
-	RUN_PRGM_MON("RUN PRGM MON"	, CommandType.GET, null, "Run status of the current remote program."),
-	RUN_PRGM	("RUN PRGM"		, CommandType.GET, null, "Program end mode of the current remote program."),
-	PRGM_LIST	("PRGM LIST"	, CommandType.GET, null, "Setup of the specified program."),
-	POWER		("POWER"		, CommandType.SET, PowerStatusFurnace.class, "Turns control power ON/OFF. The chamber will start running in the constant mode.");
+	RUN_PRGM_MON("RUN PRGM MON"	, CommandType.GET, "Run status of the current remote program.", null),
+	RUN_PRGM	("RUN PRGM"		, CommandType.GET, "Program end mode of the current remote program.", null),
+	PRGM_LIST	("PRGM LIST"	, CommandType.GET, "Setup of the specified program.", null),
+	POWER		("POWER"		, CommandType.SET, "Turns control power ON/OFF. The chamber will start running in the constant mode.", null, PowerStatusFurnace.values());
 
 //	private final static Logger logger = LogManager.getLogger();
 
 	private final String command;
 	private final String description;
-	private final Class<? extends CommandParameter> parameterClass;
+	private final CommandParameter[] commandParameters;
 	private final CommandType commandType;
+	private final Function<byte[], Object> converter;
 
-	private SCP_220_Command(String command, CommandType commandType, Class<? extends CommandParameter> dataClass, String description) {
+	private SCP_220_Command(String command, CommandType commandType, String description, Function<byte[], Object> converter, CommandParameter... commandParameters) {
 		this.command = command;
 		this.commandType = commandType;
-		this.parameterClass = dataClass;
+		this.commandParameters = commandParameters;
 		this.description = description;
+		this.converter = converter;
 	}
 
 	@Override
@@ -74,65 +75,48 @@ public enum SCP_220_Command implements CommandWithParameter {
 		return description;
 	}
 
-	public Class<? extends CommandParameter> getCommandParameterClass() {
-		return parameterClass;
+	public CommandParameter[] getCommandParameters() {
+		return commandParameters;
 	}
 
 	@Override
 	public Optional<CommandParameter[]> getParameterValues(){
 
-		return getValuesOf(parameterClass);
-	}
-
-	public ToolCommand commandGet() {
-		return new ToolCommand() {
-			
-			@Override
-			public CommandType getCommandType() {
-				return CommandType.GET;
-			}
-			
-			@Override
-			public String getCommand() {
-				return command + "?";
-			}
-
-			@Override
-			public Object bytesToObject(byte[] bytes) {
-				return new String(bytes);
-			}
-		};
-	}
-
-	public ToolCommand commandSet(CommandParameter settingData, String value) {
-
-		Optional.ofNullable(settingData)
-		.filter(sd->settingData!=null)
-		.map(Object::getClass)
-		.filter(c->c.equals(parameterClass))
-		.orElseThrow(()->new InvalidParameterException());
-
-		return new ToolCommand() {
-			
-			@Override
-			public CommandType getCommandType() {
-				return CommandType.SET;
-			}
-			
-			@Override
-			public String getCommand() {
-				return command + "," + settingData.toString(value);
-			}
-
-			@Override
-			public Object bytesToObject(byte[] bytes) {
-				return new String(bytes);
-			}
-		};
+		return Optional.ofNullable(commandParameters);
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		return converter;
+	}
+
+	@Override
+	public ToolCommand getCommand(CommandParameter commandParameter, String value) {
+
+		String command;
+		switch(commandType) {
+		case GET:
+			command = commandGet(commandParameter);
+			return new SimpleToolCommand(command, commandType, commandParameter.getAnswerConverter());
+		case SET:
+			command = commandSet(commandParameter, value) ;
+			return new SimpleToolCommand(command, commandType, commandParameter.getAnswerConverter());
+		default:
+			CommandType ct = commandParameter.getCommandType();
+			command = Optional.of(ct).filter(type->type==CommandType.GET).map(type->commandGet(commandParameter)).orElseGet(()->commandSet(commandParameter, value));
+			return new SimpleToolCommand(command, ct, commandParameter.getAnswerConverter());
+	
+		}
+	}
+
+	private String commandSet(CommandParameter commandParameter, String value) {
+		return command + "," + commandParameter.getCommand() + value;
+	}
+
+	private String commandGet(CommandParameter commandParameter) {
+		return Optional.of(commandParameter.getCommand())
+				.filter(p->!p.isEmpty())
+				.map(p->command + "?," + p)
+				.orElseGet(()->command + "?");
 	}
 }

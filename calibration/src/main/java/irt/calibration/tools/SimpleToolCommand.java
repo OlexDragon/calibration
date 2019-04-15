@@ -1,13 +1,17 @@
 package irt.calibration.tools;
 
+import java.util.function.Function;
+
 public class SimpleToolCommand implements ToolCommand {
 
 	private final String command;
 	private final CommandType commandType;
+	private final Function<byte[], Object> converter;
 
-	public SimpleToolCommand(String command, CommandType commandType) {
+	public SimpleToolCommand(String command, CommandType commandType, Function<byte[], Object> converter) {
 		this.command = command;
 		this.commandType = commandType;
+		this.converter = converter;
 	}
 
 	@Override
@@ -26,8 +30,8 @@ public class SimpleToolCommand implements ToolCommand {
 	}
 
 	@Override
-	public Object bytesToObject(byte[] bytes) {
-		return new String(bytes);
+	public Function<byte[], Object> getAnswerConverter() {
+		return converter;
 	}
 
 }

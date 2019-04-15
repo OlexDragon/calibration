@@ -4,6 +4,7 @@ import static irt.calibration.exception.ExceptionWrapper.catchConsumerException;
 import static irt.calibration.helpers.OptionalIfElse.of;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
+import irt.calibration.backgroumd.anotations.CalibrationValue;
 import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.ThreadWorker;
@@ -57,6 +59,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 
 	private final PrologixController prologixController;
 
+	@CalibrationValue("Yes #2")
 	private Integer address;
 	private Integer timeout;
 
@@ -127,7 +130,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 											b->{
 												ThreadWorker.runThread(()->{
 													synchronized (average) {
-														average.addValue((Number) HP437_Command.DEFAULT_READ.bytesToObject(bytes));
+														average.addValue((Number) HP437_Command.DEFAULT_READ.getAnswerConverter().apply(bytes));
 													}
 													Platform.runLater(()->{
 														synchronized (average) {
@@ -155,12 +158,13 @@ public class PowerMeterController extends AnchorPane implements Tool{
 
 			final ToolCommand toolCommand = PM_Language.getToolCommand(null);
 
-			final Consumer<byte[]> consumer = bytes->{
-				final String value = new String(bytes).trim();
-				taPMAnswers.setText(value);
-				PM_Language language = PM_Language.valueOf(value);
-				chbPMLanguage.getSelectionModel().select(language);
-			};
+			final Consumer<byte[]> consumer =
+					bytes->{
+						final String value = toolCommand.getAnswerConverter().apply(bytes).toString();
+						taPMAnswers.setText(value);
+						PM_Language language = PM_Language.valueOf(value);
+						chbPMLanguage.getSelectionModel().select(language);
+					};
 
 			sendCommand(toolCommand, timeout, consumer);
 		}
@@ -262,7 +266,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 				catchConsumerException(
 				command->{
 					synchronized (ToolCommand.class) {
-						taPMAnswers.appendText( "\n" + command + " : ");
+						taPMAnswers.appendText( PrologixController.DATE_FORMAT.format(new Date()) + command + " : ");
 						sendCommand(command, timeout, getConsumer(command, consumer));
 					}
 				}));
@@ -271,7 +275,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 private Consumer<byte[]> getConsumer(ToolCommand command, Consumer<byte[]> consumer) {
 		return bytes->{
 			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
-			final Object object = command.bytesToObject(bytes);
+			final Object object = command.getAnswerConverter().apply(bytes);
 			taPMAnswers.appendText(object.toString());
 		};
 	}

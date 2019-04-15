@@ -25,7 +25,13 @@ public enum PM_Language{
 		final Optional<PM_Language> oLanguage = Optional.ofNullable(language);
 		final String command = oLanguage.map(l->"SYST:LANG " + language).orElse("SYST:LANG?");
 
-		return new SimpleToolCommand(command, oLanguage.isPresent() ? CommandType.SET : CommandType.GET);
+		return new SimpleToolCommand(
+				command,
+				oLanguage.isPresent() ? CommandType.SET : CommandType.GET,
+				bytes->{
+					String string = new String(bytes).trim();
+					return PM_Language.valueOf(string);
+				}) ;
 	}
 
 	public Optional<ToolCommand[]> getPowerMeterCommands() {
