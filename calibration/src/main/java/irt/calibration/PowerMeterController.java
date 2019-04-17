@@ -13,7 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
-import irt.calibration.backgroumd.anotations.CalibrationValue;
+import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.ThreadWorker;
@@ -39,6 +39,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import jssc.SerialPortException;
 
+@CalibrationTool("Power Meter")
 public class PowerMeterController extends AnchorPane implements Tool{
 	private final static Logger logger = LogManager.getLogger();
 
@@ -59,7 +60,6 @@ public class PowerMeterController extends AnchorPane implements Tool{
 
 	private final PrologixController prologixController;
 
-	@CalibrationValue("Yes #2")
 	private Integer address;
 	private Integer timeout;
 

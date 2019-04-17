@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
+import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
@@ -33,6 +34,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import jssc.SerialPortException;
 
+@CalibrationTool("Temperature Chamber")
 public class FurnaceController extends AnchorPane implements Tool{
 	private final static Logger logger = LogManager.getLogger();
 
