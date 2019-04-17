@@ -1,40 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>irt</groupId>
-    <artifactId>calibration</artifactId>
-    <name>Calibration GUI</name>
+	<parent>
+		<groupId>irt</groupId>
+		<artifactId>calibration-parent</artifactId>
+		<version>0.0.1</version>
+		<relativePath>../calibration-parent</relativePath>
+	</parent>
 
-    <packaging>jar</packaging>
-    <version>3.0.1</version>
-    
-    <organization>
-        <!-- Used as the 'Vendor' for JNLP generation -->
-        <name>IRT Technologies</name>
-    </organization>
+	<artifactId>calibration</artifactId>
+	<name>Calibration GUI</name>
+	<packaging>jar</packaging>
 
-    <properties>
+	<organization>
+		<!-- Used as the 'Vendor' for JNLP generation -->
+		<name>IRT Technologies</name>
+	</organization>
+
+	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<mainClass>irt.calibration.CalibrationApp</mainClass>
-    </properties>
+	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.8</version>
+			<version>2.11.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.8</version>
+			<version>2.11.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scream3r</groupId>
 			<artifactId>jssc</artifactId>
 			<version>2.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>irt</groupId>
+			<artifactId>calibration-processor</artifactId>
+			<version>0.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -58,22 +68,30 @@
 	</dependencies>
 
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
 
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<annotationProcessors>
-						<proc>irt.calibration.backgroumd.processors.PropertiesProcessor</proc>
-					</annotationProcessors>
 					<source>1.8</source>
 					<target>1.8</target>
 					<compilerArguments>
@@ -89,8 +107,32 @@
 					<vendor>IRT Technologies</vendor>
 					<mainClass>${mainClass}</mainClass>
 					<bundler>EXE</bundler>
-					<bundleArguments><icon>${project.basedir}/src/main/resources/images/calibration.ico</icon></bundleArguments>
+					<bundleArguments>
+						<icon>${project.basedir}/src/main/resources/images/calibration.ico</icon>
+					</bundleArguments>
 				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-annotations</id>
+						<!-- here the phase you need -->
+						<phase>compile</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/generated-sources/annotations</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -25,7 +25,6 @@ import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 
 public class CalibrationApp extends Application {
-
 	private final static Logger logger = LogManager.getLogger();
 
     public static void main(String[] args) throws Exception {

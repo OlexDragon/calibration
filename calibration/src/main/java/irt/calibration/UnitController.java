@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.helpers.SerialPortWorker;
 import irt.calibration.helpers.ThreadWorker;
 import irt.calibration.tools.unit.AdcWorker;
@@ -18,8 +19,8 @@ import irt.calibration.tools.unit.DacWorker;
 import irt.calibration.tools.unit.DeviceInfoWorker;
 import irt.calibration.tools.unit.MeasurementWorker;
 import irt.calibration.tools.unit.UnitWorker;
-import irt.calibration.tools.unit.packets.PacketDac;
 import irt.calibration.tools.unit.packets.PacketCalibrationMade.CalibrationModeStatus;
+import irt.calibration.tools.unit.packets.PacketDac;
 import irt.calibration.tools.unit.packets.PacketMuteControl.MuteStatus;
 import irt.calibration.tools.unit.packets.parameters.Parameter;
 import irt.calibration.tools.unit.packets.parameters.ids.enums.interfaces.Converter;
@@ -43,6 +44,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.text.Text;
 
+@CalibrationTool("IRT Unit")
 public class UnitController extends AnchorPane {
 
 	private final static Logger logger = LogManager.getLogger();

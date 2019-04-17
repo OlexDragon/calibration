@@ -9,13 +9,10 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 
-import irt.calibration.backgroumd.anotations.CalibrationValue;
-
 public class CalibrationWorker {
 
 	public final static String DEFAULT_PATH = "Z:\\4Olex\\Calibration";
 
-	@CalibrationValue("Yes #1")
 	private static String test;
 
 	public static List<String> getCalibrationTypes() throws IOException {
