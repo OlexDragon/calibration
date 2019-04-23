@@ -56,11 +56,11 @@ public class MainController {
 //		tabFurnace.setOnSelectionChanged(onTabSelected(furnaceController));
 
 		// Unit (BUC, Converter, ...
-		final UnitController unitDetailsController = new UnitController();
-    	tabUnit.setContent(unitDetailsController);
+		final UnitController unitController = new UnitController();
+    	tabUnit.setContent(unitController);
 
     	// Calibration Panel
-    	CalibrationController calibrationController = new CalibrationController();
+    	CalibrationController calibrationController = new CalibrationController(powerMeterController, signalGeneratorController, furnaceController, unitController);
     	tabCalibration.setContent(calibrationController);
     }
 

@@ -3,6 +3,7 @@ package irt.calibration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,15 +13,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import irt.calibration.anotations.CalibrationTool;
+import irt.calibration.anotations.ToolAction;
 import irt.calibration.helpers.SerialPortWorker;
 import irt.calibration.helpers.ThreadWorker;
+import irt.calibration.tools.Tool;
 import irt.calibration.tools.unit.AdcWorker;
 import irt.calibration.tools.unit.DacWorker;
 import irt.calibration.tools.unit.DeviceInfoWorker;
 import irt.calibration.tools.unit.MeasurementWorker;
 import irt.calibration.tools.unit.UnitWorker;
+import irt.calibration.tools.unit.packets.PacketCalibrationMade.CalibrationModeCommand;
 import irt.calibration.tools.unit.packets.PacketCalibrationMade.CalibrationModeStatus;
 import irt.calibration.tools.unit.packets.PacketDac;
+import irt.calibration.tools.unit.packets.PacketMuteControl.MuteCommand;
 import irt.calibration.tools.unit.packets.PacketMuteControl.MuteStatus;
 import irt.calibration.tools.unit.packets.parameters.Parameter;
 import irt.calibration.tools.unit.packets.parameters.ids.enums.interfaces.Converter;
@@ -45,7 +50,7 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.text.Text;
 
 @CalibrationTool("IRT Unit")
-public class UnitController extends AnchorPane {
+public class UnitController extends AnchorPane implements Tool{
 
 	private final static Logger logger = LogManager.getLogger();
 
@@ -345,5 +350,15 @@ public class UnitController extends AnchorPane {
 				tfValue.setText(v.toString());
 			});
 		}
+	}
+
+	@ToolAction("Set Mute")
+	public Map<Converter<?>, Parameter> setMute(MuteCommand muteCommand) {
+		return unitWorker.setMuteStatus(MuteStatus.values()[muteCommand.ordinal()]);
+	}
+
+	@ToolAction("Set Calibration Mode")
+	public Map<Converter<?>, Parameter> setCalibrationMode(CalibrationModeCommand calibrationModeCommand) {
+		return unitWorker.setCalibrationMode(CalibrationModeStatus.values()[calibrationModeCommand.ordinal()]);
 	}
 }

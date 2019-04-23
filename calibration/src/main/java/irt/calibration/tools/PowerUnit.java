@@ -48,8 +48,7 @@ public enum PowerUnit implements CommandParameter{
 
 	@Override
 	public Function<byte[], Object> getAnswerConverter() {
-		// TODO Auto-generated method stub
-		return null;
+		return bytes->new String(bytes);
 	}
 
 	@Override

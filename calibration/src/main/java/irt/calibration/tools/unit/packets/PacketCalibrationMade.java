@@ -29,4 +29,9 @@ public class PacketCalibrationMade extends PacketDeviceDebug {
 			return values()[(ordinal()+1)%2];
 		}
 	}
+
+	public enum CalibrationModeCommand{
+		OFF,
+		ON;
+	}
 }

@@ -33,6 +33,11 @@ public class PacketMuteControl extends PacketImpl {
 		}
 	}
 
+	public enum MuteCommand{
+		UNMUTE,
+		MUTE;
+	}
+
 	@Override
 	protected Class<? extends Converter<?>> getConverterClass() {
 		return getAddress()==null ? ConfigurationFCM.class : ConfigurationBUC.class;
