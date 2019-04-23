@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.anotations.CalibrationTool;
+import irt.calibration.anotations.ToolAction;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
@@ -167,7 +168,7 @@ public class FurnaceController extends AnchorPane implements Tool{
 		sendCommand(selectedCommand,  selectedParameter, value, null);
 	}
 
-    @FXML  void onSet() throws SerialPortException, PrologixTimeoutException {
+    @FXML void onSet() throws SerialPortException, PrologixTimeoutException {
 
 		final SCP_220_Command selectedCommand = chbCommand.getSelectionModel().getSelectedItem();
 		final CommandParameter selectedParameter = chbCommandParameter.getSelectionModel().getSelectedItem();
@@ -201,5 +202,10 @@ public class FurnaceController extends AnchorPane implements Tool{
 			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
 			taAnswers.appendText(" = " + converter.apply(bytes).toString());
 		};
+	}
+
+	@ToolAction("Set Chamber Temperature")
+	public void setTemperature(String value) throws SerialPortException, PrologixTimeoutException {
+		sendCommand(SCP_220_Command.TEMP, ConstantMode.GET, null, null);
 	}
 }

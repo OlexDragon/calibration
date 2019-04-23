@@ -6,6 +6,11 @@ import static irt.calibration.helpers.OptionalIfElse.of;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
@@ -14,10 +19,12 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.anotations.CalibrationTool;
+import irt.calibration.anotations.ToolAction;
 import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.helpers.ThreadWorker;
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.PowerUnit;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
 import irt.calibration.tools.power_meter.PM_Language;
@@ -298,5 +305,36 @@ private Consumer<byte[]> getConsumer(ToolCommand command, Consumer<byte[]> consu
 
 	public void getValue(int timeout, Consumer<byte[]> consumer) throws SerialPortException, PrologixTimeoutException {
 		sendCommand(HP437_Command.DEFAULT_READ, timeout, consumer);
+	}
+
+	@ToolAction("Trigger With Delay")
+	public Object getValue() throws SerialPortException, PrologixTimeoutException, InterruptedException, ExecutionException, TimeoutException {
+		PM_Consumer consumer = new PM_Consumer();
+		sendCommand(HP437_Command.TRIGGER_WITH_DELAY, timeout, consumer);
+		return consumer.get();
+	}
+
+	private class PM_Consumer implements Consumer<byte[]>{
+
+		private Object result;
+
+		private FutureTask<Object> task = new FutureTask<>(
+				new Callable<Object>() {
+
+					@Override
+					public Object call() throws Exception {
+						return result;
+					}
+				});
+
+		@Override
+		public void accept(byte[] bytes) {
+			result = PowerUnit.DBM.getAnswerConverter().apply(bytes);
+			ThreadWorker.runThread(task);
+		}
+
+		public Object get() throws InterruptedException, ExecutionException, TimeoutException {
+			return task.get(timeout, TimeUnit.MILLISECONDS);
+		}
 	}
 }

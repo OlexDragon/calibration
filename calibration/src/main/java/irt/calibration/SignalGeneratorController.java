@@ -9,8 +9,12 @@ import org.apache.logging.log4j.Logger;
 
 import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.anotations.CalibrationTool;
+import irt.calibration.anotations.ToolAction;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
+import irt.calibration.tools.FrequencyUnit;
+import irt.calibration.tools.PowerStatus;
+import irt.calibration.tools.PowerUnit;
 import irt.calibration.tools.SimpleToolCommand;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
@@ -167,4 +171,19 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 			prologixController.sendToolCommand(new SimpleToolCommand(command, CommandType.SET, scpiCommand.getAnswerConverter()) , null, timeout);
 		}
 	}
+
+    @ToolAction("Set Outpot Off/On")
+    public void setOutput(PowerStatus powerStatus) throws SerialPortException, PrologixTimeoutException {
+    	set(SG_SCPICommand.OUTPUT, powerStatus, null);
+    }
+
+    @ToolAction("Set Power")
+    public void setPower(String value) throws SerialPortException, PrologixTimeoutException {
+    	set(SG_SCPICommand.POWER, PowerUnit.DBM,  value);
+    }
+
+    @ToolAction("Set Frequency")
+    public void setFrequency(FrequencyUnit frequencyUnit, String value) throws SerialPortException, PrologixTimeoutException {
+    	set(SG_SCPICommand.FREQUENCY, frequencyUnit, value);
+    }
 }
