@@ -1,6 +1,8 @@
 package irt.calibration;
 
 import java.io.IOException;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -38,6 +40,7 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 
 	public static final int DEFAULT_ADDRESS = 19;
 	private static final int DEFAULT_TIMEOUT = 1000;
+	private final Observable observable = new Observable();
 
 	private final PrologixController prologixController;
 
@@ -59,6 +62,11 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
 		} catch (IOException exc) {
 			logger.catching(exc);
 		}
+	}
+
+	@Override
+	public void addObserver(Observer o) {
+		observable.addObserver(o);
 	}
 
 	@FXML private TextField tfAddress;
@@ -186,4 +194,10 @@ public class SignalGeneratorController extends AnchorPane implements Tool {
     public void setFrequency(FrequencyUnit frequencyUnit, String value) throws SerialPortException, PrologixTimeoutException {
     	set(SG_SCPICommand.FREQUENCY, frequencyUnit, value);
     }
+
+	@Override
+	public void cansel() {
+		// TODO Auto-generated method stub
+		
+	}
 }

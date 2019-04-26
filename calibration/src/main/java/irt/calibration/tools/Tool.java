@@ -1,5 +1,6 @@
 package irt.calibration.tools;
 
+import java.util.Observer;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
@@ -11,6 +12,7 @@ import javafx.scene.control.TextInputControl;
 
 public interface Tool {
 
+	void cansel();
 //	void setAddress();
 
 	static Preferences prefs = Preferences.userNodeForPackage(Tool.class);
@@ -40,4 +42,6 @@ public interface Tool {
 					prefs.putInt(key, v);
 				});
 	}
+
+	void addObserver(Observer o);
 }
