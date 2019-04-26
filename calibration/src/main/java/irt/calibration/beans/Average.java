@@ -10,8 +10,12 @@ public class Average{
 //	private final static Logger logger = LogManager.getLogger();
 
 	private final List<Double> list = new ArrayList<>();
+	private int limit = 100;
 
 	public void addValue(Number value) {
+
+		if(list.size()>=limit)
+			list.remove(0);
 
 		final double doubleValue = value.doubleValue();
 
@@ -60,6 +64,14 @@ public class Average{
 			list = list.parallelStream().filter(predicate).collect(Collectors.toList());
 
 		}while(true);
+	}
+
+	public int getLimit() {
+		return limit;
+	}
+
+	public void setLimit(int limit) {
+		this.limit = limit;
 	}
 
 	@Override

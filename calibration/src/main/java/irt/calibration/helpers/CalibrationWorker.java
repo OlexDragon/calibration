@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import irt.calibration.PrologixController;
 import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.anotations.ToolAction;
 import irt.calibration.tools.Tool;
@@ -46,6 +47,7 @@ public class CalibrationWorker extends FutureTask<Void>{
 	private static Callable<Void> callable = ()->{
 		try {
  
+			notifyObserver(PrologixController.getDate() + "");
 			Files.lines(path)
 			.filter(line->run)
 			.forEach(line->{
