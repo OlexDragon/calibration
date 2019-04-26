@@ -4,7 +4,6 @@ import static irt.calibration.exception.ExceptionWrapper.catchConsumerException;
 import static irt.calibration.helpers.OptionalIfElse.of;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Optional;
@@ -281,7 +280,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 				catchConsumerException(
 				command->{
 					synchronized (ToolCommand.class) {
-						taPMAnswers.appendText( PrologixController.DATE_FORMAT.format(new Date()) + command + " : ");
+						taPMAnswers.appendText( PrologixController.getDate() + command + " : ");
 						sendCommand(command, timeout, getConsumer(command, consumer));
 					}
 				}));

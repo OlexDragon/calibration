@@ -551,24 +551,25 @@ public class CalibrationSequenceDialog extends Dialog<Map<Integer, List<String>>
 		final List<String> lines = Files.readAllLines(path);
 		// Fill First Row
 		lines.stream()
-		.forEach(line->{
-			ThreadWorker.runThread(()->{
+		.forEach(
+				line->{
 
-				final String[] values = line.split(",");
+					final String[] values = line.split(",");
 
-				final Node[] nodes = addActionRow();
-				select((ChoiceBox<?>)nodes[0], values[0]);
-				select((ChoiceBox<?>)nodes[1], values[1]);
+					final Node[] nodes = addActionRow();
+					select((ChoiceBox<?>)nodes[0], values[0]);
+					select((ChoiceBox<?>)nodes[1], values[1]);
 
-				final List<Node> rowNodes = getRowNodeStream(getLastRowIndex()).collect(Collectors.toList());
-				if(rowNodes.size()!=values.length) {
-					CalibrationApp.showAlert("Edit Sequence", "Something went wrong", AlertType.ERROR);
-					logger.error("Something went wrong. {} : {}", (Object)values, rowNodes);
-					return;
-				}
-				for(int i=2; i<values.length; i++)
-					setValue(rowNodes.get(i), values[i]);
-			 }); });
+					final List<Node> rowNodes = getRowNodeStream(getLastRowIndex()).collect(Collectors.toList());
+					if(rowNodes.size()!=values.length) {
+						CalibrationApp.showAlert("Edit Sequence", "Something went wrong", AlertType.ERROR);
+						logger.error("Something went wrong. {} : {}", (Object)values, rowNodes);
+						return;
+					}
+
+					for(int i=2; i<values.length; i++)
+						setValue(rowNodes.get(i), values[i]);
+				});
 	}
 
 	private void setValue(Node node, String value) {

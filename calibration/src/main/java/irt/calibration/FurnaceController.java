@@ -1,13 +1,13 @@
 package irt.calibration;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -208,12 +208,10 @@ public class FurnaceController extends AnchorPane implements Tool{
 		synchronized (PrologixController.class) {
 
 			ToolCommand command = toolCommand.getCommand(commandParameter, value);
-			Date date = new Date();
-			PrologixController.DATE_FORMAT.format(date);
 
 			logger.error("toolCommand: {}; commandParameter: {}; value: {}; command: {};", toolCommand, commandParameter, value, command);
 			
-			String text = PrologixController.DATE_FORMAT.format(date) +command.getCommand();
+			String text = PrologixController.getDate() +command.getCommand();
 			taAnswers.appendText(text);
 			prologixController.setAuto(AutoMode.ON);
 			prologixController.setAddress(address);
@@ -238,9 +236,9 @@ public class FurnaceController extends AnchorPane implements Tool{
 	public Temperature waitToStabilize() throws SerialPortException, PrologixTimeoutException {
 
 		run = true;
-		Average average = new Average();
-		List<Temperature> buffer = new ArrayList<>();
-		AtomicBoolean continueLoop = new AtomicBoolean(true);
+		final Average average = new Average();
+		final AtomicBoolean continueLoop = new AtomicBoolean(true);
+		final AtomicReference<Temperature> reference = new AtomicReference<>();
 
 		while(run && continueLoop.get()) {
 
@@ -248,31 +246,25 @@ public class FurnaceController extends AnchorPane implements Tool{
 					SCP_220_Command.TEMP,
 					ConstantMode.GET, null,
 					bytes->{
-						Temperature answer = (Temperature) ConstantMode.GET.getAnswerConverter().apply(bytes);
-						double monitored = answer.getMonitored();
-						average.addValue(monitored);
-						double averageValue = average.getAverageValue();
 
-						// Maintain buffer size up to 5 items
-						int size = buffer.size();
-						if(size>5)
-							buffer.remove(0);
+						final Temperature answer = (Temperature) ConstantMode.GET.getAnswerConverter().apply(bytes);
+						final double monitored = answer.getMonitored();
+						final double averageValue = average.getAverageValue();
 
-						logger.error("{} : {} : {}", buffer.size(), average, buffer);
-						if(size>4 && !buffer.parallelStream().map(Temperature::getMonitored).map(d->!d.equals(averageValue)).filter(Boolean::booleanValue).findAny().isPresent()) {
+						logger.error("monitored: {} : {} : {}", monitored, average);
+						if(average.getCount()>4 && (Double.compare(monitored, averageValue)==0 || Math.abs(monitored - averageValue) <= 0.1)) {
 							continueLoop.set(false);
+							reference.set(answer);
 							return;
 						}
 
-						buffer.add(answer);
+						average.addValue(monitored);
 					});
 
 			synchronized (this) { try { wait(60*1000); } catch (InterruptedException e) {} }
 		}
 
-		Temperature temperature = buffer.stream().findAny().orElse(null);
-		logger.error(temperature);
-		return temperature;
+		return reference.get();
 	}
 
 	@ToolAction("Turn Power")

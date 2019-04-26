@@ -148,7 +148,7 @@ public class CalibrationApp extends Application {
     		return;
     	}
 
-    	logger.error(thread);
+//    	logger.error(thread);
     	logger.catching(throwable);
     };
 }

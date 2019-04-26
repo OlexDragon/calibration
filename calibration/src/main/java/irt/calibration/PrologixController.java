@@ -178,10 +178,8 @@ public class PrologixController extends AnchorPane {
 		send(PrologixCommand.AUTO ,Integer.toString(autoMode.ordinal()), timeout, getConsumer(null));
 	}
 
-	public final static DateFormat DATE_FORMAT = new SimpleDateFormat("\ndd.MM.yy HH:mm:SS -> ");
 	private void writeToTextArea(ToolCommand command, String value) {
-		Date date = new Date();
-		taPrologixAnswers.appendText( DATE_FORMAT.format(date) + command +  (value==null ? " " : ": " + value));
+		taPrologixAnswers.appendText( getDate() + command +  (value==null ? " " : ": " + value));
 	}
 
 	private Consumer<byte[]> getConsumer(Consumer<byte[]> consumer) {
@@ -219,5 +217,10 @@ public class PrologixController extends AnchorPane {
 	public enum AutoMode {
 		OFF,
 		ON
+	}
+
+	private final static DateFormat DATE_FORMAT = new SimpleDateFormat("\ndd.MM.yy HH:mm:SS -> ");
+	public static String getDate() {
+		return DATE_FORMAT.format(new Date());
 	}
 }

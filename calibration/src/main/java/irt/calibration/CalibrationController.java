@@ -70,6 +70,7 @@ public class CalibrationController extends AnchorPane implements Observer{
 
 	@Override
 	public void update(Observable o, Object arg) {
+		taAnswers.appendText(arg.toString());
 		logger.error(arg);
 	}
 
@@ -186,14 +187,12 @@ public class CalibrationController extends AnchorPane implements Observer{
 	public Consumer<? super String> saveSequenceToFile(Map<Integer, List<String>> map) {
 		return fileName->{
 
-			logger.error(map);
 			StringBuffer sb = new StringBuffer();
 			map.entrySet().stream().map(Entry<Integer, List<String>>::getValue)
 			.filter(action->action.size()>1)
 			.forEach(
 					action->{
 
-						logger.error(action);
 						final String actionLine = action.stream().collect(Collectors.joining(","));
 
 						sb.append(actionLine);
