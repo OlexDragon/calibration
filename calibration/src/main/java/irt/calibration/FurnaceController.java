@@ -1,8 +1,13 @@
 package irt.calibration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -13,14 +18,17 @@ import org.apache.logging.log4j.Logger;
 import irt.calibration.PrologixController.AutoMode;
 import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.anotations.ToolAction;
+import irt.calibration.beans.Average;
 import irt.calibration.exception.PrologixTimeoutException;
 import irt.calibration.tools.CommandType;
 import irt.calibration.tools.CommandWithParameter;
 import irt.calibration.tools.Tool;
 import irt.calibration.tools.ToolCommand;
+import irt.calibration.tools.furnace.Temperature;
 import irt.calibration.tools.furnace.data.CommandParameter;
 import irt.calibration.tools.furnace.data.CommandParameter.NeedValue;
 import irt.calibration.tools.furnace.data.ConstantMode;
+import irt.calibration.tools.furnace.data.PowerStatusFurnace;
 import irt.calibration.tools.furnace.data.SCP_220_Command;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -38,6 +46,7 @@ import jssc.SerialPortException;
 @CalibrationTool("Temperature Chamber")
 public class FurnaceController extends AnchorPane implements Tool{
 	private final static Logger logger = LogManager.getLogger();
+	private final Observable observable = new Observable();
 
 	private static final int DEFAULT_ADDRESS = 2;
 	private static final int DEFAULT_TIMEOUT = 1000;
@@ -59,6 +68,7 @@ public class FurnaceController extends AnchorPane implements Tool{
 
 	private Integer address;
 	private Integer timeout;
+	private boolean run;
 
 	public FurnaceController(PrologixController prologixController) {
 
@@ -74,6 +84,19 @@ public class FurnaceController extends AnchorPane implements Tool{
 
 		} catch (IOException exc) {
 			logger.catching(exc);
+		}
+	}
+
+	@Override
+	public void addObserver(Observer o) {
+		observable.addObserver(o);
+	}
+
+	@Override
+	public void cansel() {
+		run = false;
+		synchronized (this) {
+			notifyAll();
 		}
 	}
 
@@ -187,6 +210,8 @@ public class FurnaceController extends AnchorPane implements Tool{
 			ToolCommand command = toolCommand.getCommand(commandParameter, value);
 			Date date = new Date();
 			PrologixController.DATE_FORMAT.format(date);
+
+			logger.error("toolCommand: {}; commandParameter: {}; value: {}; command: {};", toolCommand, commandParameter, value, command);
 			
 			String text = PrologixController.DATE_FORMAT.format(date) +command.getCommand();
 			taAnswers.appendText(text);
@@ -204,8 +229,55 @@ public class FurnaceController extends AnchorPane implements Tool{
 		};
 	}
 
-	@ToolAction("Set Chamber Temperature")
+	@ToolAction("Set Target Temperature")
 	public void setTemperature(String value) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(SCP_220_Command.TEMP, ConstantMode.GET, null, null);
+		sendCommand(SCP_220_Command.TEMP, ConstantMode.TARGET, value, null);
+	}
+
+	@ToolAction("Wait for the temperature to stabilize")
+	public Temperature waitToStabilize() throws SerialPortException, PrologixTimeoutException {
+
+		run = true;
+		Average average = new Average();
+		List<Temperature> buffer = new ArrayList<>();
+		AtomicBoolean continueLoop = new AtomicBoolean(true);
+
+		while(run && continueLoop.get()) {
+
+			sendCommand(
+					SCP_220_Command.TEMP,
+					ConstantMode.GET, null,
+					bytes->{
+						Temperature answer = (Temperature) ConstantMode.GET.getAnswerConverter().apply(bytes);
+						double monitored = answer.getMonitored();
+						average.addValue(monitored);
+						double averageValue = average.getAverageValue();
+
+						// Maintain buffer size up to 5 items
+						int size = buffer.size();
+						if(size>5)
+							buffer.remove(0);
+
+						logger.error("{} : {} : {}", buffer.size(), average, buffer);
+						if(size>4 && !buffer.parallelStream().map(Temperature::getMonitored).map(d->!d.equals(averageValue)).filter(Boolean::booleanValue).findAny().isPresent()) {
+							continueLoop.set(false);
+							return;
+						}
+
+						buffer.add(answer);
+					});
+
+			synchronized (this) { try { wait(60*1000); } catch (InterruptedException e) {} }
+		}
+
+		Temperature temperature = buffer.stream().findAny().orElse(null);
+		logger.error(temperature);
+		return temperature;
+	}
+
+	@ToolAction("Turn Power")
+	public void turnPower(PowerStatusFurnace powerStatus) throws SerialPortException, PrologixTimeoutException {
+
+		sendCommand(SCP_220_Command.POWER, powerStatus, null, null);
 	}
 }

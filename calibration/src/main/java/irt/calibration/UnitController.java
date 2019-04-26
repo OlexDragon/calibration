@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -55,6 +57,7 @@ public class UnitController extends AnchorPane implements Tool{
 	private final static Logger logger = LogManager.getLogger();
 
 	private final static List<TextField> textFields = new ArrayList<>();
+	private final Observable observable = new Observable();
 
 	@FXML private ChoiceBox<String>	 chbUnitSerialPort;
 	@FXML private ContextMenu		 comPortMenuUnit;
@@ -86,6 +89,11 @@ public class UnitController extends AnchorPane implements Tool{
 		} catch (IOException exc) {
 			logger.catching(exc);
 		}
+	}
+
+	@Override
+	public void addObserver(Observer o) {
+		observable.addObserver(o);
 	}
 
 	@FXML void initialize() throws IOException {
@@ -360,5 +368,11 @@ public class UnitController extends AnchorPane implements Tool{
 	@ToolAction("Set Calibration Mode")
 	public Map<Converter<?>, Parameter> setCalibrationMode(CalibrationModeCommand calibrationModeCommand) {
 		return unitWorker.setCalibrationMode(CalibrationModeStatus.values()[calibrationModeCommand.ordinal()]);
+	}
+
+	@Override
+	public void cansel() {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -9,7 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -19,44 +23,33 @@ import org.apache.logging.log4j.Logger;
 import irt.calibration.anotations.CalibrationTool;
 import irt.calibration.anotations.ToolAction;
 import irt.calibration.tools.Tool;
-import javafx.application.Platform;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Window;
 
-public class CalibrationWorker implements Runnable{
+public class CalibrationWorker extends FutureTask<Void>{
 	private final static Logger logger = LogManager.getLogger();
 
 	public final static String DEFAULT_PATH = "Z:\\4Olex\\Calibration";
 
 	private static Tool[] tools;
+	private final static Observable OBSERVABLE = new Observable() {
 
-	private TextArea taAnswers;
+		@Override
+		public void notifyObservers(Object arg) {
+			setChanged();
+			super.notifyObservers(arg);
+		}};
 
-	private boolean run = true;
+	private static boolean run = true;
+	private static Path path;
 
-	private Path path;
-
-	public CalibrationWorker(Path path, TextArea taAnswers) {
-		this.taAnswers = taAnswers;
-		ThreadWorker.runThread(this);
-		this.path = path;
-	}
-
-	public void cansel() {
-		run = false;
-		Platform.runLater(()->taAnswers.appendText("\n\tCalibration cancelled."));
-	}
-
-	@Override
-	public void run() {
+	private static Callable<Void> callable = ()->{
 		try {
  
 			Files.lines(path)
 			.filter(line->run)
 			.forEach(line->{
-				taAnswers.appendText(line);
-				taAnswers.appendText("\n");
+				notifyObserver(line + '\n');
 				final String[] split = line.split(",");
 
 				logger.error(line);
@@ -67,21 +60,32 @@ public class CalibrationWorker implements Runnable{
 						tool->
 						Optional.ofNullable(tool.getClass().getAnnotation(CalibrationTool.class))
 						.map(CalibrationTool::value)
-						.map(value->value.equals(split[0]))
+						.map(
+								annotationValue->{
+									String toolDescription = split[0];
+									logger.debug("'{}' : '{}'", annotationValue, toolDescription);
+									return annotationValue.equals(toolDescription);
+								})
 						.orElse(false))
 				.findAny()
 				.ifPresent(tool->{
-					// Get Method
+					// Get the Method
 					Arrays.stream(tool.getClass().getMethods())
 					.filter(
 							method->
 							Optional.ofNullable(method.getAnnotation(ToolAction.class))
 							.map(ToolAction::value)
-							.map(value->value.equals(split[1]))
+							.map(
+									annotationValue->{
+										String methodDescription = split[1];
+										logger.debug("'{}' : '{}'", annotationValue, methodDescription);
+										return annotationValue.equals(methodDescription);
+									})
 							.orElse(false))
 					.findAny()
 					.ifPresent(method->{
 						try {
+
 							String[] values = split.length>2 ? Arrays.copyOfRange(split, 2, split.length) : new String[0];
 							final Parameter[] parameters = method.getParameters();
 
@@ -100,22 +104,58 @@ public class CalibrationWorker implements Runnable{
 										return null;
 									}).toArray();
 
-							method.invoke(tool, args);
+							Optional.ofNullable(method.invoke(tool, args))
+							.ifPresent(result->notifyObserver(" - " + result));;
 
 						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 							logger.catching(e);
+							notifyObserver("\n Calibration cancelled. Error message: " + getErrorMessages(e));
 						}
 					});
 					
 				});
 			});
 
+			logger.error("\nEnd of Calibration");
+
 		} catch (IOException e) {
 			logger.catching(e);
 		}
+	
+		return null;
+	};
+
+	public CalibrationWorker(Path path) {
+		super(callable);
+		CalibrationWorker.path = path;
+		ThreadWorker.runThread(this);
 	}
 
-	private Object mapToObj(String value, Parameter parameter) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	private static void notifyObserver(String string) {
+		OBSERVABLE.notifyObservers(string);
+	}
+
+	public void cansel() {
+		run = false;
+		Arrays.stream(tools).forEach(Tool::cansel);
+		notifyObserver("\n\tCalibration cancelled.");
+	}
+
+	private static String getErrorMessages(Exception e) {
+		StringBuffer sb = new StringBuffer();
+		Throwable cause = e;
+		while(cause!=null) {
+			Optional.ofNullable(cause.getLocalizedMessage())
+			.ifPresent(message->{
+				sb.append("\n\t").append(message);
+			});
+			cause = cause.getCause();
+		}
+		
+		return sb.toString();
+	}
+
+	private static Object mapToObj(String value, Parameter parameter) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		final Class<?> type = parameter.getType();
 
@@ -148,5 +188,9 @@ public class CalibrationWorker implements Runnable{
 
 	public static void setTools(Tool[] tools) {
 		CalibrationWorker.tools = tools;
+	}
+
+	public void addObserver(Observer observer) {
+		OBSERVABLE.addObserver(observer);
 	}
 }

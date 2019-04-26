@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -43,13 +46,14 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.StringConverter;
 
-public class CalibrationController extends AnchorPane implements Tool{
+public class CalibrationController extends AnchorPane implements Observer{
 	private final static Logger logger = LogManager.getLogger();
 
 	public CalibrationController(Tool... tools) {
 
 		CalibrationSequenceDialog.setTools(tools);
 		CalibrationWorker.setTools(tools);
+		Arrays.stream(tools).forEach(tool->tool.addObserver(this));
 
 		try {
 
@@ -64,14 +68,10 @@ public class CalibrationController extends AnchorPane implements Tool{
 		}
 	}
 
-    @FXML private ChoiceBox<Path> chbCalibrationGroupName;
-    @FXML private ChoiceBox<Path> chbCalibrationSequence;
-    @FXML private TextArea taAnswers;
-    @FXML private MenuItem miEditSequence;
-    @FXML private MenuItem miShowSequence;
-    @FXML private MenuItem miDeleteSequence;
-    @FXML private Button btnStart;
-    @FXML private Button btnCansel;
+	@Override
+	public void update(Observable o, Object arg) {
+		logger.error(arg);
+	}
 
     private StringConverter<Path> pathConverter = new StringConverter<Path>() {
 		
@@ -81,6 +81,15 @@ public class CalibrationController extends AnchorPane implements Tool{
 		
 		@Override public Path fromString(String string) { return null; }
 	};
+
+    @FXML private ChoiceBox<Path> chbCalibrationGroupName;
+    @FXML private ChoiceBox<Path> chbCalibrationSequence;
+    @FXML private TextArea taAnswers;
+    @FXML private MenuItem miEditSequence;
+    @FXML private MenuItem miShowSequence;
+    @FXML private MenuItem miDeleteSequence;
+    @FXML private Button btnStart;
+    @FXML private Button btnCansel;
 
 	@FXML void initialize() throws IOException {
 		chbCalibrationGroupName.setConverter(pathConverter);
@@ -163,8 +172,11 @@ public class CalibrationController extends AnchorPane implements Tool{
 
     CalibrationWorker calibrationWorker;
     @FXML void onStart() {
+    	btnCansel.setDisable(false);
+    	btnStart.setDisable(true);
     	final Path path = chbCalibrationSequence.getSelectionModel().getSelectedItem();
-    	calibrationWorker = new CalibrationWorker(path, taAnswers);
+    	calibrationWorker = new CalibrationWorker(path);
+    	calibrationWorker.addObserver(this);
     }
 
     @FXML void onCansel() {

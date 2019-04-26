@@ -5,6 +5,8 @@ import static irt.calibration.helpers.OptionalIfElse.of;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -52,6 +54,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
 
 	public static final int DEFAULT_ADDRESS = 13;
 	private static final int DEFAULT_TIMEOUT = 1000;
+	private final Observable observable = new Observable();
 
 	@FXML private TextField					 tfPMAddress;
     @FXML private ChoiceBox<PM_Model>		 chbPMModel;
@@ -87,6 +90,11 @@ public class PowerMeterController extends AnchorPane implements Tool{
 		} catch (IOException exc) {
 			logger.catching(exc);
 		}
+	}
+
+	@Override
+	public void addObserver(Observer o) {
+		observable.addObserver(o);
 	}
 
 	@FXML void initialize() throws IOException {
@@ -336,5 +344,11 @@ private Consumer<byte[]> getConsumer(ToolCommand command, Consumer<byte[]> consu
 		public Object get() throws InterruptedException, ExecutionException, TimeoutException {
 			return task.get(timeout, TimeUnit.MILLISECONDS);
 		}
+	}
+
+	@Override
+	public void cansel() {
+		// TODO Auto-generated method stub
+		
 	}
 }
