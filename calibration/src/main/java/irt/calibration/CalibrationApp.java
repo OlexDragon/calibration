@@ -51,6 +51,7 @@ public class CalibrationApp extends Application {
 
     public void start(Stage stage) throws Exception {
 
+    	stage.setOnCloseRequest(e->System.exit(0));
 		final ObservableList<Image> icons = stage.getIcons();
 
 		icons.add(new Image(getClass().getResourceAsStream("/images/calibration.ico")));
@@ -111,7 +112,7 @@ public class CalibrationApp extends Application {
 	}
 
 	public final static String SERIAL_PORT_IS_BUSY	 = "Serial port %s is busy.";
-    UncaughtExceptionHandler uncaughtExceptionHandler = (thread, throwable)->{
+    private final UncaughtExceptionHandler uncaughtExceptionHandler = (thread, throwable)->{
 
     	SerialPortException serialPortException = getException(SerialPortException.class, throwable);
 
