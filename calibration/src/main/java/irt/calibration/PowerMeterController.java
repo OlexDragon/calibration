@@ -132,7 +132,7 @@ public class PowerMeterController extends AnchorPane implements Tool{
     	Platform.runLater(()->taPMAnswers.setText(""));
     	ThreadWorker.runThread(()->{
     		Platform.runLater(()->btbAverage.setDisable(true));
-			final Average average = new Average();
+			final Average average = new Average(10, 0.001);
 			synchronized (ToolCommand.class) {
 				for(int i=0; i<100; i++) {
 					try {
