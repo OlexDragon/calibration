@@ -9,12 +9,19 @@ import java.util.stream.Collectors;
 public class Average{
 //	private final static Logger logger = LogManager.getLogger();
 
-	private final List<Double> list = new ArrayList<>();
-	private int limit = 100;
+	private final List<Double> list;
+	private final int listinitialCapacity;
+	private final double precision;
+
+	public Average(int initialCapacity, double precision) {
+		list = new ArrayList<>(initialCapacity);
+		this.listinitialCapacity = initialCapacity;
+		this.precision = precision;
+	}
 
 	public void addValue(Number value) {
 
-		if(list.size()>=limit)
+		if(isFilled())
 			list.remove(0);
 
 		final double doubleValue = value.doubleValue();
@@ -39,9 +46,10 @@ public class Average{
 		do {
 			DoubleSummaryStatistics summary = list.parallelStream().collect(Collectors.summarizingDouble(Number::doubleValue));
 			double average = summary.getAverage(); double min = summary.getMin(); double max = summary.getMax();
-			double middle = (max-min)/2+min; long difference = Math.round(middle - average);
+			double middle = (max-min)/2+min;
+			double difference = middle - average;
 
-			if(difference==0)
+			if(Double.compare(middle, average)==0 || Math.abs(difference) <= precision)
 				return average;
 
 			boolean topPeaks = difference>0;
@@ -66,16 +74,12 @@ public class Average{
 		}while(true);
 	}
 
-	public int getLimit() {
-		return limit;
-	}
-
-	public void setLimit(int limit) {
-		this.limit = limit;
-	}
-
 	@Override
 	public String toString() {
 		return "AverageValue [count=" +getCount() + ", list=" + list + "]";
+	}
+
+	public boolean isFilled() {
+		return list.size()>=listinitialCapacity;
 	}
 }

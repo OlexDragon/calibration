@@ -220,21 +220,30 @@ public class FurnaceController extends AnchorPane implements Tool{
 	private Consumer<byte[]> getConsumer(Function<byte[], Object> converter, Consumer<byte[]> consumer) {
 		return bytes->{
 
+			taAnswers.appendText(" => ");
+			taAnswers.appendText(converter.apply(bytes).toString());
 			Optional.ofNullable(consumer).ifPresent(c->c.accept(bytes));
-			taAnswers.appendText(" = " + converter.apply(bytes).toString());
 		};
 	}
 
 	@ToolAction("Set Target Temperature")
-	public void setTemperature(String value) throws SerialPortException, PrologixTimeoutException {
-		sendCommand(SCP_220_Command.TEMP, ConstantMode.TARGET, value, null);
+	public String setTemperature(String value) throws SerialPortException, PrologixTimeoutException {
+
+		final AtomicReference<String> reference = new AtomicReference<String>();
+
+		sendCommand(SCP_220_Command.TEMP, ConstantMode.TARGET, value,
+				bytes->{
+					reference.set(new String(bytes));
+				});
+
+		return reference.get();
 	}
 
 	@ToolAction("Wait for the temperature to stabilize")
 	public Temperature waitToStabilize() throws SerialPortException, PrologixTimeoutException {
 
 		run = true;
-		final Average average = new Average();
+		final Average average = new Average(60, 0.01);
 		final AtomicBoolean continueLoop = new AtomicBoolean(true);
 		final AtomicReference<Temperature> reference = new AtomicReference<>();
 
@@ -249,8 +258,9 @@ public class FurnaceController extends AnchorPane implements Tool{
 						final double monitored = answer.getMonitored();
 						final double averageValue = average.getAverageValue();
 
-						logger.error("monitored: {} : {} : {}", monitored, average);
-						if(average.getCount()>4 && (Double.compare(monitored, averageValue)==0 || Math.abs(monitored - averageValue) <= 0.1)) {
+						logger.error("monitored: {}; averageValue: {}; {}", monitored, averageValue, average);
+						if(average.isFilled() && (Double.compare(monitored, averageValue)==0 || Math.abs(monitored - averageValue) <= 0.01)) {
+							logger.error("monitored: {}; averageValue: {}; {}", monitored, averageValue, average);
 							continueLoop.set(false);
 							reference.set(answer);
 							return;
@@ -259,15 +269,27 @@ public class FurnaceController extends AnchorPane implements Tool{
 						average.addValue(monitored);
 					});
 
-			synchronized (this) { try { wait(60*1000); } catch (InterruptedException e) {} }
+			int tOut = 10*1000;
+			logger.error("Wait for {}", tOut);
+			synchronized (this) { try { wait(tOut); } catch (InterruptedException e) {} }
+			logger.error("to new cycle");
 		}
 
+		logger.error("And Wait");
 		return reference.get();
 	}
 
 	@ToolAction("Turn Power")
-	public void turnPower(PowerStatusFurnace powerStatus) throws SerialPortException, PrologixTimeoutException {
+	public String turnPower(PowerStatusFurnace powerStatus) throws SerialPortException, PrologixTimeoutException {
+		logger.error(powerStatus);
 
-		sendCommand(SCP_220_Command.POWER, powerStatus, null, null);
+		final AtomicReference<String> reference = new AtomicReference<String>();
+
+		sendCommand(SCP_220_Command.POWER, powerStatus, null,
+				bytes->{
+					reference.set(new String(bytes));
+				});
+
+		return reference.get();
 	}
 }
