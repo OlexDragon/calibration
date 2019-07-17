@@ -16,7 +16,7 @@ public class AverageValueTest {
 
 	@Test
 	public void highPeakTest() {
-		Average average = new Average(100, 0.01);
+		Average average = new Average(100, 1);
 		IntStream.range(615, 700).forEach(average::addValue);
 		for(int i=0; i<100; i++)
 			average.addValue(10 + i%3);
@@ -28,19 +28,19 @@ public class AverageValueTest {
 
 	@Test
 	public void lowPeakTest() {
-		Average average = new Average(100, 0.01);
+		Average average = new Average(100, 1);
 		IntStream.range(-15, 0).forEach(average::addValue);
 		for(int i=0; i<100; i++)
 			average.addValue(10 + i%7);
 		double averageValue = average.getAverageValue();
 		logger.error("{} : {}", averageValue, average);
 
-		assertEquals(10.5, averageValue, 0.2);
+		assertEquals(13, averageValue, 0.2);
 	}
 
 	@Test
 	public void negotiveTest() {
-		Average average = new Average(100, 0.01);
+		Average average = new Average(100, 1);
 		IntStream.range(-15, 0).forEach(average::addValue);
 		for(int i=0; i<100; i++)
 			average.addValue(-100 + i%7);
@@ -48,7 +48,7 @@ public class AverageValueTest {
 		double averageValue = average.getAverageValue();
 		logger.error("{} : {}", averageValue, average);
 
-		assertEquals(-97, averageValue, 0.2);
+		assertEquals(-97, averageValue, 1);
 	}
 
 	@Test

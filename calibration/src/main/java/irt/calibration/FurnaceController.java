@@ -243,7 +243,7 @@ public class FurnaceController extends AnchorPane implements Tool{
 	public Temperature waitToStabilize() throws SerialPortException, PrologixTimeoutException {
 
 		run = true;
-		final Average average = new Average(60, 0.01);
+		final Average average = new Average(60, 1);
 		final AtomicBoolean continueLoop = new AtomicBoolean(true);
 		final AtomicReference<Temperature> reference = new AtomicReference<>();
 
