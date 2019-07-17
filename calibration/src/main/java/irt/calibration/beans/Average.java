@@ -3,6 +3,7 @@ package irt.calibration.beans;
 import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -11,12 +12,16 @@ public class Average{
 
 	private final List<Double> list;
 	private final int listinitialCapacity;
-	private final double precision;
+	private final int precision;
 
-	public Average(int initialCapacity, double precision) {
+	/**
+	 * @param initialCapacity - value buffer size
+	 * @param precision - 1 is the minimum value. All values less than 1 will be changed to 1
+	 */
+	public Average(int initialCapacity, int precision) {
 		list = new ArrayList<>(initialCapacity);
 		this.listinitialCapacity = initialCapacity;
-		this.precision = precision;
+		this.precision = Optional.of(precision).filter(p->p>0).orElse(1);
 	}
 
 	public void addValue(Number value) {
@@ -44,12 +49,12 @@ public class Average{
 
 		Boolean filterTopPeaks = null;
 		do {
-			DoubleSummaryStatistics summary = list.parallelStream().collect(Collectors.summarizingDouble(Number::doubleValue));
+			DoubleSummaryStatistics summary = list.parallelStream().collect(Collectors.summarizingDouble(Double::doubleValue));
 			double average = summary.getAverage(); double min = summary.getMin(); double max = summary.getMax();
-			double middle = (max-min)/2+min;
+			double middle = (max+min)/2;// Find middle point
 			double difference = middle - average;
 
-			if(Double.compare(middle, average)==0 || Math.abs(difference) <= precision)
+			if(Math.abs(difference) <= precision)
 				return average;
 
 			boolean topPeaks = difference>0;
@@ -60,12 +65,11 @@ public class Average{
 				return average;
 
 			Predicate<Double> predicate;
-			double target;
 			if(topPeaks) {
-				target = 2*average - min;
+				final double target = 2*average - min;
 				predicate = topPeaks ? d->d.doubleValue()<=target : d->d.doubleValue()>=target;
 			}else {
-				target = 2*average - max;
+				final double target = 2*average - max;
 				predicate = topPeaks ? d->d.doubleValue()<=target : d->d.doubleValue()>=target;
 			}
 
